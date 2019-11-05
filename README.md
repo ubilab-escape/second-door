@@ -11,7 +11,7 @@ In the first stage the group has to crack the lock of the fusebox. A laser somew
 
 The lock on the fusebox measures the duration or intensity of the incident laser beam. So that only red laser light can open the lock, appropriate color filters must be attached. For example, a photodiode can be used to detect the incident light beam. The use of a small microcontroller is recommended for the readout of the sensor. The progress of this crack process is visualized with LEDs arranged in a circle. Once this color circle is closed, the microcontroller gives a signal to an actuator so that the lid of the fusebox opens. This completes the first stage. 
 
-!!Hier Bild vom Schloss einfügen!!
+![image2](docu/readme/Laser_sensor.png)
 
 Hints: Laser warning symbols on lock and laser
 
