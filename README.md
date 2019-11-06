@@ -1,5 +1,9 @@
 # second-door
 
+<p align="center"> 
+<img src="/docu/readme/under_construction.png" width=400>
+</p>
+
 The main concept is visualized in the figure below.
 
 <p align="center"> 
