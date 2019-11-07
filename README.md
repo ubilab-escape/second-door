@@ -60,3 +60,25 @@ Another idea would be to win a game against the AI to open the door. To let more
 ## 3. Fancy Robot replacing "Poolkatze"
 
 It is just possible to open the door from inside. Therefore the "Poolkatze" was used to get inside via a small cat flap. Unfortunately the "Poolkatze" is dead so the participants have to make use of a small robot which was freed and activated within the two stages before. They have to control the robot and drive it through the cat flap to open the door with the robot from inside (Just "push" some button with the robot).
+
+# Components
+
+| Component 	| estimated cost 	|
+|---------------	|:--------------:	|
+| Mirror 	| 20€ 	|
+| Fuse box 	| 40€ 	|
+| PCB 	| 20€ 	|
+| Laser + box 	| 15€ 	|
+| LEDs/Wire/... 	| 20€ 	|
+| LED stripe 	| 30€ 	|
+
+
+
+| Version 	| Component 	| estimated cost 	|
+|---------	|---------------------	|:--------------:	|
+| 1 	| Fingerprint sensor 	| 20€ 	|
+|  	| Camera 	| 20€ 	|
+| 2 	| Screen 	| 90€ 	|
+|  	| Wearable controller 	| 15€ 	|
+| 3 	| Robot 	| 100€ 	|
+
