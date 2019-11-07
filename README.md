@@ -38,6 +38,25 @@ In the upper left corner you can see an ESP32, which is responsible for the enti
 
 Hints: Printed codes on the PCB, resistors, etc.
 
-# Stage 3 - Breaking the biometric lock
+# Stage 3 - Breaking door
+
+Until now we have three different idears of how to open the door after repowering.
+
+## 1. Breaking the biometric lock
 
 As soon as the door is supplied with power again, it can be opened as usual. Therefore, participants must either search for a badge to get a picture of the regular employee, or search for a fingerprint, or perhaps both. The badge could be hidden in a lab coat an employee forgot. The fingerprint can be attached to a bottle (either unlock with the bottle itself or the participants must "copy" the fingerprint to make it usable).
+
+It could also be possible to reuse the badge which was used to open the first door.
+
+## 2. Game vs. AI
+
+Another idea would be to win a game against the AI to open the door. To let more than just one participate we could create a game where they have to play together. An example would be pong but with 3 player against the AI. The bars could be controlled by e.g. some wearabeles of the participants (moving arm up and down makes bar move up and down).
+
+<p align="center"> 
+<img src="/docu/readme/pong_for_3.jpg" width=200>
+</p>
+<p align="center">Figure 5: Pong for three player<p align="center">
+
+## 3. Fancy Robot replacing "Poolkatze"
+
+It is just possible to open the door from inside. Therefore the "Poolkatze" was used to get inside via a small cat flap. Unfortunately the "Poolkatze" is dead so the participants have to make use of a small robot which was freed and activated within the two stages before. They have to control the robot and drive it through the cat flap to open the door with the robot from inside (Just "push" some button with the robot).
