@@ -1,0 +1,27 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "/home/jay/Arduino/libraries/TM1637",
+                "/home/jay/.arduino15/packages/esp32/tools/**",
+                "/home/jay/.arduino15/packages/esp32/hardware/esp32/1.0.4/**"
+            ],
+            "browse": {
+                "path": [
+                    "/opt/arduino-1.8.10/hardware",
+                    "/opt/arduino-1.8.10/libraries",
+                    "/home/jay/Arduino/libraries/"
+                ],
+                "limitSymbolsToIncludedHeaders": true,
+                "databaseFilename": ""
+            },
+            "forcedInclude": [],
+            "intelliSenseMode": "gcc-x64",
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "c11",
+            "cppStandard": "c++17"
+        }
+    ],
+    "version": 4
+}
