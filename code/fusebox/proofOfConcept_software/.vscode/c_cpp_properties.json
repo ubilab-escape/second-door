@@ -11,7 +11,9 @@
                 "path": [
                     "/opt/arduino-1.8.10/hardware",
                     "/opt/arduino-1.8.10/libraries",
-                    "/home/jay/Arduino/libraries/"
+                    "/home/jay/Arduino/libraries/",
+                    "/home/jay/.arduino15/packages/esp32/tools/**",
+                    "/home/jay/.arduino15/packages/esp32/hardware/esp32/1.0.4/**"
                 ],
                 "limitSymbolsToIncludedHeaders": true,
                 "databaseFilename": ""

@@ -7,6 +7,7 @@
 
 #include <TM1637Display.h>
 
+
 #define SEG_CLK 27
 #define SEG_DIO 26
 
@@ -15,15 +16,20 @@
 #define POTI_2 0
 #define POTI_3 4
 
-#define POTI_4 34
 
 #define PIEZO_0 13
 
 #define BUTTON_0 16
 #define BUTTON_1 17
 
-#define LEDC_CHANNEL 0
+#define LEDC_CHANNEL1 0
 #define LEDC_RESOLUTION 8
+
+#define REWIRE_0_1 25
+#define REWIRE_0_2 33
+#define REWIRE_0_3 32
+#define REWIRE_0_4 35
+#define REWIRE_0_5 34
 
 TM1637Display display(SEG_CLK, SEG_DIO);
 
@@ -50,11 +56,11 @@ void setup() {
   pinMode(BUTTON_0, INPUT);
   pinMode(BUTTON_1, INPUT);
 
-  ledcSetup(LEDC_CHANNEL, 2000, LEDC_RESOLUTION);
-  ledcAttachPin(PIEZO_0, LEDC_CHANNEL);
+  ledcSetup(LEDC_CHANNEL1, 2000, LEDC_RESOLUTION);
+  ledcAttachPin(PIEZO_0, LEDC_CHANNEL1);
 
   xTaskCreatePinnedToCore(TaskPotentiometerReadout, "TaskPotentiometerReadout", 1024, NULL, 2, NULL, ARDUINO_RUNNING_CORE);
-  //xTaskCreatePinnedToCore(TaskWiringReadout, "TaskWiringReadout", 1024, NULL, 2, NULL, ARDUINO_RUNNING_CORE);
+  xTaskCreatePinnedToCore(TaskWiringReadout, "TaskWiringReadout", 1024, NULL, 2, NULL, ARDUINO_RUNNING_CORE);
   xTaskCreatePinnedToCore(TaskPiezoButtonReadout, "TaskPiezoButtonReadout", 1024, NULL, 2, NULL, ARDUINO_RUNNING_CORE);
 }
 
@@ -80,7 +86,16 @@ void TaskWiringReadout(void *pvParameters) {
   // TODO: Implement Wiring Puzzle
   (void) pvParameters;
   for(;;) {
-
+    uint16_t rewiringValues0[5];
+    uint16_t rewiringPins0[] = {REWIRE_0_1, REWIRE_0_2, REWIRE_0_3, REWIRE_0_4, REWIRE_0_5};
+    for (int i = 0; i <=4; i++) {
+      rewiringValues0[i] = analogRead(rewiringPins0[i]);
+      rewiringValues0[i] = map(rewiringValues0[i], 0, 4095, 0, 33);
+      // Serial.print("Pin " + String(i) + " : ");
+      Serial.println(rewiringValues0[i]);
+    }
+    Serial.println("Test");
+    vTaskDelay(500);
   }
 }
 
@@ -90,21 +105,25 @@ void TaskPiezoButtonReadout(void *pvParameters) {
     // TODO: Debounce Buttons
     uint16_t buttonState1 = digitalRead(BUTTON_0);
     if(buttonState1) {
-      uint16_t frequency = evaluatePotentiometer(POTI_4, 0, 4095, 100, 100000);
-      ledcWriteTone(LEDC_CHANNEL, frequency);
-      vTaskDelay(250);
-    } else {
-      ledcWriteTone(LEDC_CHANNEL, 0);
-    }
-    uint16_t buttonState2 = digitalRead(BUTTON_1);
-    if(buttonState2) {
       float frequencies[] = {130.81, 164.81, 196.0, 246.94, 261.63, 246.94, 196.0, 164.81};
       for (int i = 0; i <= 7; i++) {
-        ledcWriteTone(LEDC_CHANNEL, frequencies[i]);
+        ledcWriteTone(LEDC_CHANNEL1, frequencies[i]);
         vTaskDelay(250);
       } 
     } else {
-      ledcWriteTone(LEDC_CHANNEL, 0);
+      ledcWriteTone(LEDC_CHANNEL1, 0);
+    }
+    uint16_t buttonState2 = digitalRead(BUTTON_1);
+    if(buttonState2) {
+      // e 164.81
+      // d# 155.56
+      float frequencies[] = {164.81, 155.56, 164.81, 155.56, 123.47, 146.83, 130.81, 110};
+      for (int i = 0; i <= 7; i++) {
+        ledcWriteTone(LEDC_CHANNEL1, frequencies[i]);
+        vTaskDelay(250);
+      } 
+    } else {
+      ledcWriteTone(LEDC_CHANNEL1, 0);
     }
   }
 }
