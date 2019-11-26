@@ -9,17 +9,29 @@ In this file we are going to show and document the main implementation tasks.
 </p>
 <p align="center">Figure 1: Visualization for the communication structure<p align="center">
 
-
 # Fuse Box
-
 
 # Laser + Box
 
 # Button to open door
 
+To open the door a button has to be pushed with the robot. The button needs to communicate with the rest of the room. To give a hint it should be possible to light it up.
+
+<p align="center"> 
+<img src="implementation/button/red_push_button.jpg" width=300>
+</p>
+<p align="center">Figure X: Push button to open the door inside the server room<p align="center">
+
 # Cat flap
 
-Maybe outsourcing to "door team"
+Not decided yet!
+
+**Problem**: sliding door does not allow much space for stepper/linear track/..
+
+Possible solutions:
+
+* FuseBox switches on the light inside the server room -> now robot can be seen inside the room
+* usual cat flap with small lock
 
 # Robot with controller
 
@@ -32,9 +44,11 @@ The robot will be controlled with an wireless PS2 controller which is attached t
 
 <p align="center">Figure X: PS2 controller wireless with pinout<p align="center">
 
-Possible hardware implementation in figure below.
+As chassis for the robot an old prototype from the university is used(Picture will follow). There is already some electronic to controll the two dc-motors.
 
 <p align="center"> 
-<img src="implementation/robot/overview_robot_electronic.jpg" width=400>
+<img src="implementation/robot/engine_control_robot.png" width=400>
 </p>
-<p align="center">Figure X: Visualization for the possible robot hardware<p align="center">
+<p align="center">Figure X: Pinout for existing robot electronic<p align="center">
+
+The pins "motor A1" and "motor A2" are used to controll the left wheel of the robot. Pins "motor B1" and "motor B2" for the right wheel. A LED is used to visualize if the battery of the robot is low. Furthermore there are LEDs "arround" the robot to attract attention of the participants.
