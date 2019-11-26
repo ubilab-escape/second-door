@@ -1,3 +1,6 @@
+#include <TM1637Display.h>
+#include <SPI.h>
+
 #if CONFIG_FREERTOS_UNICORE
 #define ARDUINO_RUNNING_CORE 0
 #else
@@ -5,11 +8,18 @@
 #endif
 
 
-#include <TM1637Display.h>
+
 
 
 #define SEG_CLK 27
 #define SEG_DIO 26
+
+
+
+
+#define MA7221_CS 14
+
+
 
 #define POTI_0 15
 #define POTI_1 2
@@ -33,12 +43,29 @@
 
 TM1637Display display(SEG_CLK, SEG_DIO);
 
+
 uint16_t evaluatePotentiometer(uint8_t p_poti);
 void setDisplay(uint16_t* p_displayData);
 
 void TaskPotentiometerReadout(void *pvParameters);
 void TaskWiringReadout(void *pvParameters);
 void TaskPiezoButtonReadout(void *pvParameters);
+void TaskControlLedMatrix(void *pvParameters);
+
+void maxTransfer(uint8_t address, uint8_t value) {
+
+  // Ensure LOAD/CS is LOW
+  digitalWrite(MA7221_CS, LOW);
+
+  // Send the register address
+  SPI.transfer(address);
+
+  // Send the value
+  SPI.transfer(value);
+
+  // Tell chip to load in data
+  digitalWrite(MA7221_CS, HIGH);
+}
 
 
 void setup() {
@@ -50,8 +77,6 @@ void setup() {
   Serial.println("Setup started");
   
   display.setBrightness(0x0a);
-  
-  Serial.println("Setup finished");
 
   pinMode(BUTTON_0, INPUT);
   pinMode(BUTTON_1, INPUT);
@@ -59,9 +84,47 @@ void setup() {
   ledcSetup(LEDC_CHANNEL1, 2000, LEDC_RESOLUTION);
   ledcAttachPin(PIEZO_0, LEDC_CHANNEL1);
 
+
+  // MAX7221 Configuration
+  pinMode(MA7221_CS, OUTPUT);
+  SPI.setBitOrder(MSBFIRST);
+  SPI.begin();
+
+  
+  // TODO: https://gist.github.com/nrdobie/8193350
+
+  // disable decode mode
+  maxTransfer(0x09, 0x00);
+
+  // set intensity, medium
+  maxTransfer(0x0A, 0x01);
+
+  // enter normal operation mode
+  maxTransfer(0x0C, 0x01);
+
+  // enable segDP, segA, ... , segG
+  maxTransfer(0x01, 0xFF);
+
+  for (uint8_t i = 0x01; i < 0x0F; i++) {
+    maxTransfer(0x0A, i);
+    delay(250);
+  }
+
+  for (uint8_t i = 0x0F; i > 0x00; i--) {
+    maxTransfer(0x0A, i);
+    delay(250);
+  }
+  
+
+
+
+  
   xTaskCreatePinnedToCore(TaskPotentiometerReadout, "TaskPotentiometerReadout", 1024, NULL, 2, NULL, ARDUINO_RUNNING_CORE);
   xTaskCreatePinnedToCore(TaskWiringReadout, "TaskWiringReadout", 1024, NULL, 2, NULL, ARDUINO_RUNNING_CORE);
   xTaskCreatePinnedToCore(TaskPiezoButtonReadout, "TaskPiezoButtonReadout", 1024, NULL, 2, NULL, ARDUINO_RUNNING_CORE);
+  // xTaskCreatePinnedToCore(TaskControlLedMatrix, "TaskControlLedMatrix", 1024, NULL, 2, NULL, ARDUINO_RUNNING_CORE);
+
+  Serial.println("Setup finished");
 }
 
 void loop() {
@@ -127,6 +190,14 @@ void TaskPiezoButtonReadout(void *pvParameters) {
     }
   }
 }
+
+// void TaskControlLedMatrix(void *pvParameters) {
+//   (void) pvParameters;
+//   for(;;) {
+//     maxTransfer()
+    
+//   }
+// }
 
 void setDisplay(uint16_t* p_displayData) {
   static uint8_t data[4];
