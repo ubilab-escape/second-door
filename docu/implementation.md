@@ -11,7 +11,22 @@ In this file we are going to show and document the main implementation tasks.
 
 # Fuse Box
 
+## Rewiring
+
+
+
+## Door
+
+The laser is used to melt the lock. [LED ring](https://www.adafruit.com/product/2855) is used to indicate the status. 
+
+<p align="center"> 
+<img src="implementation/fusebox/led_ring.jpg" width=400>
+</p>
+<p align="center">Figure X: LEDs for indicating status of melting lock process<p align="center">
+
 # Laser + Box
+
+[Laser](https://www.adafruit.com/product/1054) 
 
 # Button to open door
 
@@ -35,7 +50,7 @@ Possible solutions:
 
 # Robot with controller
 
-The robot will be controlled with an wireless PS2 controller which is attached to the wall. There exists a library to read out the commands [Link](http://www.billporter.info/2010/06/05/playstation-2-controller-arduino-library-v1-0/).
+The robot will be controlled with an wireless PS2 controller which is attached to the wall. There exists a [library](http://www.billporter.info/2010/06/05/playstation-2-controller-arduino-library-v1-0/) to read out the commands.
 
 <p align="center">
   <img src="implementation/robot/ps2_controller.jpg" width="200" />
