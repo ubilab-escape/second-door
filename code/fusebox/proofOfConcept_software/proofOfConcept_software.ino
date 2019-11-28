@@ -7,19 +7,20 @@
 #define ARDUINO_RUNNING_CORE 1
 #endif
 
-#define MAX7221_CS 14
+#define MAX7221_CS 5 
+#define MAX7219_CS 12
 
 #define POTI_0 15
-#define POTI_1 4
-#define POTI_2 27
-#define POTI_3 26
+#define POTI_1 2 
+#define POTI_2 0 
+#define POTI_3 4 
 
 #define PIEZO_0 13
 
 #define BUTTON_0 16
 #define BUTTON_1 17
 
-#define LED_0 2
+#define LED_0 26 //2
 
 #define LEDC_CHANNEL1 0
 #define LEDC_RESOLUTION 8
@@ -29,6 +30,12 @@
 #define REWIRE_0_3 32
 #define REWIRE_0_4 35
 #define REWIRE_0_5 34
+
+#define LOCK_0 14
+
+#define LED_RING 27
+
+//#define LASER_SENSE 26
 
 typedef enum tPuzzleState {INIT, SOLVED, NOT_SOLVED};
 
