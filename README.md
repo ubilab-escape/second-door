@@ -13,7 +13,7 @@ These puzzles are called Stages in the following.
 In the first stage the group has to crack the lock of the fusebox. A laser somewhere in the room is to be used. In order to make the laser beam visible, a spray bottle, a fog machine or a kind of gas can be used. There is a lock on the fusebox which can only be opened when the laser beam is aimed at it. To do this, the group must use mirrors to divert the laser beam through the entire room. The 4 mirrors that can be used are mounted on a wall with magnets. This hides them, and the group must come up with the idea of using the mirrors. 
 
 <p align="center"> 
-<img src="/docu/readme/room_with_laser.png" width=400>
+<img src="/docu/readme/escape_room.png" width=400>
 </p>
 <p align="center">Figure 2: Room with laser<p align="center">
 
@@ -40,4 +40,4 @@ Hints: Printed codes on the PCB, resistors, etc.
 
 # Stage 3 - Breaking door by robot
 
-It is just possible to open the door from inside. Therefore the "Poolkatze" was used to get inside via a small cat flap. Unfortunately the "Poolkatze" is dead so the participants have to make use of a small robot which was freed and activated within the two stages before. They have to control the robot and drive it through the cat flap to open the door with the robot from inside (Just "push" some button with the robot). The controll of the robot is placed on the other side of the room. Therefore one participant has to guide the controlling one (swap bottom and top or swap left and right).
+It is just possible to open the door from inside. Therefore the "Poolkatze" was used to get inside via a small cat flap. Unfortunately the "Poolkatze" is dead so the participants have to make use of a small robot. They have to control the robot and drive it through the cat flap to open the door with the robot from inside (Just "push" some button with the robot). The controll of the robot is placed on the other side of the room. Therefore one participant has to guide the controlling one (swap bottom and top or swap left and right).
