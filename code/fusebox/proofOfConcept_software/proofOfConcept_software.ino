@@ -19,6 +19,8 @@
 #define BUTTON_0 16
 #define BUTTON_1 17
 
+#define LED_0 2
+
 #define LEDC_CHANNEL1 0
 #define LEDC_RESOLUTION 8
 
@@ -27,6 +29,11 @@
 #define REWIRE_0_3 32
 #define REWIRE_0_4 35
 #define REWIRE_0_5 34
+
+typedef enum tPuzzleState {INIT, SOLVED, NOT_SOLVED};
+
+tPuzzleState puzzleStateRewiring0;
+tPuzzleState puzzleStatePotis;
 
 
 MAX7221 max1 = MAX7221(MAX7221_CS, 4);
@@ -38,12 +45,16 @@ void setDisplay(uint16_t* p_displayData);
 void TaskPotentiometerReadout(void *pvParameters);
 void TaskWiringReadout(void *pvParameters);
 void TaskPiezoButtonReadout(void *pvParameters);
-void TaskControlLedMatrix(void *pvParameters);
+
+void TaskControlPuzzleState(void *pvParameters);
 
 void setup() {
 
   // TODO: Clean Setup
   // TODO: Implement MQTT Connection
+
+  puzzleStateRewiring0 = INIT;
+  puzzleStatePotis = INIT;
 
   Serial.begin(115200);
   Serial.println("Setup started");
@@ -52,22 +63,23 @@ void setup() {
   pinMode(BUTTON_0, INPUT);
   pinMode(BUTTON_1, INPUT);
 
+  pinMode(LED_0, OUTPUT);
+
+  // Init PWM Signals for Buzzers
   ledcSetup(LEDC_CHANNEL1, 2000, LEDC_RESOLUTION);
   ledcAttachPin(PIEZO_0, LEDC_CHANNEL1);
 
+  // Init MAX7221 on SPI Bus
   max1.initMAX();
-  max1.transferData(0x01, 0x08);
-  delay(500);
-  max1.transferData(0x01, 0x02);
-  max1.transferData(0x02, 0x00);
-  delay(500);
 
   Serial.println("Setup finished");
 
- 
+  // Attach Tasks
+  xTaskCreatePinnedToCore(TaskControlPuzzleState, "TaskControlPuzzleState", 1024, NULL, 1, NULL, 0);
   xTaskCreatePinnedToCore(TaskPotentiometerReadout, "TaskPotentiometerReadout", 1024, NULL, 2, NULL, ARDUINO_RUNNING_CORE);
   xTaskCreatePinnedToCore(TaskWiringReadout, "TaskWiringReadout", 1024, NULL, 2, NULL, ARDUINO_RUNNING_CORE);
   xTaskCreatePinnedToCore(TaskPiezoButtonReadout, "TaskPiezoButtonReadout", 1024, NULL, 2, NULL, ARDUINO_RUNNING_CORE);
+  
 
 }
 
@@ -93,11 +105,13 @@ void TaskPotentiometerReadout(void *pvParameters) {
 
     if (pValues[0] == 4 && pValues[1] == 3 && pValues[2] == 2 && pValues[3] == 1) {
       Serial.println("Potis Solved!"); 
+      puzzleStatePotis = SOLVED;
     } else {
       Serial.println("Potis Not solved!");
+      puzzleStatePotis = NOT_SOLVED;
     }
     
-    vTaskDelay(1000);
+    vTaskDelay(500);
   }
 }
 
@@ -116,7 +130,30 @@ void TaskWiringReadout(void *pvParameters) {
       Serial.print(": ");
       Serial.println(rewiringValues0[i]);
     }
-    vTaskDelay(2000);
+
+    if (rewiringValues0[0] == 25 && rewiringValues0[1] == 18 && rewiringValues0[2] == 11 && rewiringValues0[3] == 33 && rewiringValues0[4] == 5) {
+      Serial.println("Rewiring 0 solved!");
+      puzzleStateRewiring0 = SOLVED;
+    } else {
+      Serial.println("Rewiring 0 not solved");
+      puzzleStateRewiring0 = NOT_SOLVED;
+    }
+
+    vTaskDelay(500);
+  }
+}
+
+void TaskControlPuzzleState(void *pvParameters) {
+  (void) pvParameters;
+  for(;;) {
+    Serial.println("hey");
+    if (puzzleStatePotis == SOLVED && puzzleStateRewiring0 == SOLVED) {
+      Serial.println("All Puzzles Solved");
+      digitalWrite(LED_0, HIGH);
+    } else {
+      digitalWrite(LED_0, LOW);
+    }
+    vTaskDelay(500);
   }
 }
 
