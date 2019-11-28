@@ -1,5 +1,5 @@
 
-#include "MAX7221.h"
+#include "src/MAX7221/MAX7221.h"
 
 #if CONFIG_FREERTOS_UNICORE
 #define ARDUINO_RUNNING_CORE 0
