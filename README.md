@@ -2,7 +2,7 @@
 The main concept is visualized in the figure below.
 
 <p align="center"> 
-<img src="/docu/readme/second_door_main_concept.png" width=400>
+<img src="/docu/readme/second_door_main_concept.jpg" width=400>
 </p>
 <p align="center">Figure 1: Main concept<p align="center">
 
