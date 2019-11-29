@@ -20,7 +20,7 @@
 #define BUTTON_0 16
 #define BUTTON_1 17
 
-#define LED_0 26 //2
+
 
 #define LEDC_CHANNEL1 0
 #define LEDC_RESOLUTION 8
@@ -107,10 +107,12 @@ void TaskPotentiometerReadout(void *pvParameters) {
       Serial.print(": ");
       Serial.println(pValues[i]);
     }
-    max1.transferData(0x01, pValues[2]);
-    max1.transferData(0x02, pValues[3]);
+    max1.transferData(0x01, pValues[0]);
+    max1.transferData(0x02, pValues[1]);
+    max1.transferData(0x03, pValues[2]);
+    max1.transferData(0x04, pValues[3]);
 
-    if (pValues[0] == 4 && pValues[1] == 3 && pValues[2] == 2 && pValues[3] == 1) {
+    if (pValues[0] == 1 && pValues[1] == 9 && pValues[2] == 9 && pValues[3] == 5) {
       Serial.println("Potis Solved!"); 
       puzzleStatePotis = SOLVED;
     } else {
@@ -156,9 +158,8 @@ void TaskControlPuzzleState(void *pvParameters) {
     Serial.println("hey");
     if (puzzleStatePotis == SOLVED && puzzleStateRewiring0 == SOLVED) {
       Serial.println("All Puzzles Solved");
-      digitalWrite(LED_0, HIGH);
     } else {
-      digitalWrite(LED_0, LOW);
+      Serial.println("Not all Puzzles Solved!");
     }
     vTaskDelay(500);
   }

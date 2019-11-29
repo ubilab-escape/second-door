@@ -27,7 +27,7 @@ void MAX7221::initMAX() {
     transferData(0x09, 0x0F); // Code B decode for digits 3-0 No Decode for digits 7 - 4
 
     // set intensity
-    transferData(0x0A, 0x00); // Duty Cycle 1/16 (min on) 
+    transferData(0x0A, 0x06); // Duty Cycle 1/16 (min on) 
 
     // set scan-limit
     transferData(0x0B, 0x03); // Display Digits 0 1 2 3
