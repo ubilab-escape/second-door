@@ -131,6 +131,7 @@ void loop() {
 void TaskPotentiometerReadout(void *pvParameters) {
   (void) pvParameters;
   for(;;) {
+    Serial.print("TaskPotentiometerReadout: ");
     uint16_t pValues[4];
     uint8_t potis[] = {POTI_0, POTI_1, POTI_2, POTI_3};
     for (int i = 0; i <= 3; i++) {
@@ -166,6 +167,7 @@ void TaskWiringReadout(void *pvParameters) {
   // TODO: Implement Wiring Puzzle
   (void) pvParameters;
   for(;;) {
+    Serial.print("TaskWiringReadout: ");
     uint16_t rewiringValues0[5];
     uint16_t rewiringPins0[] = {REWIRE_0_1, REWIRE_0_2, REWIRE_0_3, REWIRE_0_4, REWIRE_0_5};
     for (int i = 0; i <=4; i++) {
@@ -177,7 +179,9 @@ void TaskWiringReadout(void *pvParameters) {
       // Serial.println(rewiringValues0[i]);
     }
 
-    if (rewiringValues0[0] == 25 && rewiringValues0[1] == 18 && rewiringValues0[2] == 11 && rewiringValues0[3] == 33 && rewiringValues0[4] == 5) {
+    if ((rewiringValues0[0] >=  3 || rewiringValues0[0] <=  7) && (rewiringValues0[1] >=  9 || rewiringValues0[1] <= 13) && 
+        (rewiringValues0[2] >= 16 || rewiringValues0[2] <= 20) && (rewiringValues0[3] >= 23 || rewiringValues0[3] <= 27) &&
+        (rewiringValues0[4] >= 31 || rewiringValues0[4] <= 35)) { 
       Serial.println("Rewiring 0 solved!");
       puzzleStateRewiring0 = SOLVED;
     } else {
@@ -192,11 +196,7 @@ void TaskWiringReadout(void *pvParameters) {
 void TaskControlPuzzleState(void *pvParameters) {
   (void) pvParameters;
   for(;;) {
-
-    // TODO: remove DEBUG purpose
-    puzzleStateRewiring0 = SOLVED;
-    // ledm.clear();
-
+    Serial.print("TaskControlPuzzleState: ");
     if (puzzleStatePotis == SOLVED && puzzleStateRewiring0 == SOLVED) {
       Serial.println("All Puzzles Solved");
       ledm1.setColumn(0, 0b11100000);
@@ -211,13 +211,14 @@ void TaskControlPuzzleState(void *pvParameters) {
       ledm1.commit();
     }
     
-    vTaskDelay(1000);
+    vTaskDelay(300);
   }
 }
 
 void TaskRefreshLedMatrix(void *pvParameters) {
   // define 10s delay
   for(;;) {
+    Serial.print("TaskRefreshLedMatrix: ");
     ledm1.clear();
     ledm1.commit();
     Serial.println("Display cleared!");
@@ -228,19 +229,19 @@ void TaskRefreshLedMatrix(void *pvParameters) {
 void TaskPiezoButtonReadout(void *pvParameters) {
   (void) pvParameters;
   for(;;) {
+    Serial.print("TaskPiezoButtonReadout: ");
     // TODO: Debounce Buttons
     uint16_t buttonState1 = digitalRead(BUTTON_0);
+    uint16_t buttonState2 = digitalRead(BUTTON_1);
     if(buttonState1) {
+      Serial.println("Button 1 pressed");
       float frequencies[] = {130.81, 164.81, 196.0, 246.94, 261.63, 246.94, 196.0, 164.81};
       for (int i = 0; i <= 7; i++) {
         ledcWriteTone(LEDC_CHANNEL1, frequencies[i]);
         vTaskDelay(250);
       } 
-    } else {
-      ledcWriteTone(LEDC_CHANNEL1, 0);
-    }
-    uint16_t buttonState2 = digitalRead(BUTTON_1);
-    if(buttonState2) {
+    } else if(buttonState2) {
+      Serial.println("Button 2 pressed");
       // e 164.81
       // d# 155.56
       float frequencies[] = {164.81, 155.56, 164.81, 155.56, 123.47, 146.83, 130.81, 110};
@@ -249,6 +250,7 @@ void TaskPiezoButtonReadout(void *pvParameters) {
         vTaskDelay(250);
       } 
     } else {
+      Serial.println("No Button pressed");
       ledcWriteTone(LEDC_CHANNEL1, 0);
     }
     vTaskDelay(500);
