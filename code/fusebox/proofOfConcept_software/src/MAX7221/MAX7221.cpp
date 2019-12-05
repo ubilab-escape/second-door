@@ -21,6 +21,7 @@ void MAX7221::initMAX() {
     pinMode(cs_pin_, OUTPUT);
     
     SPI.setBitOrder(MSBFIRST);
+    SPI.setClockDivider(SPI_CLOCK_DIV64);
     SPI.begin();
 
     // enable decode mode
