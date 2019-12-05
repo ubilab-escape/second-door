@@ -6,8 +6,8 @@
         {
             "name": "Linux",
             "includePath": [
-                "/home/jay/Documents/PlatformIO/Projects/espTestArduino/include",
-                "/home/jay/Documents/PlatformIO/Projects/espTestArduino/src",
+                "/home/jay/Documents/Dev/integration/second-door/code/fusebox/design_software/include",
+                "/home/jay/Documents/Dev/integration/second-door/code/fusebox/design_software/src",
                 "/home/jay/.platformio/lib/Adafruit NeoPixel_ID28",
                 "/home/jay/.platformio/packages/framework-arduinoespressif32/libraries/SPI/src",
                 "/home/jay/.platformio/packages/framework-arduinoespressif32/tools/sdk/include/config",
@@ -99,8 +99,8 @@
             "browse": {
                 "limitSymbolsToIncludedHeaders": true,
                 "path": [
-                    "/home/jay/Documents/PlatformIO/Projects/espTestArduino/include",
-                    "/home/jay/Documents/PlatformIO/Projects/espTestArduino/src",
+                    "/home/jay/Documents/Dev/integration/second-door/code/fusebox/design_software/include",
+                    "/home/jay/Documents/Dev/integration/second-door/code/fusebox/design_software/src",
                     "/home/jay/.platformio/lib/Adafruit NeoPixel_ID28",
                     "/home/jay/.platformio/packages/framework-arduinoespressif32/libraries/SPI/src",
                     "/home/jay/.platformio/packages/framework-arduinoespressif32/tools/sdk/include/config",
