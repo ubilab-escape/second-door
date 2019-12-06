@@ -1,6 +1,7 @@
-#include <Adafruit_NeoPixel.h>
-#include <Arduino.h>
 #include "MAX7221.h"
+#include <Adafruit_NeoPixel.h>
+#include <Adafruit_TCS34725.h>
+#include <Arduino.h>
 
 #if CONFIG_FREERTOS_UNICORE
 #define ARDUINO_RUNNING_CORE 0
@@ -42,14 +43,25 @@ tPuzzleState puzzleStatePotis;
 MAX7221 seg1 = MAX7221(MAX7221_CS, 1, MAX7221::SEGMENT);
 MAX7221 ledm1 = MAX7221(MAX7219_CS, 4, MAX7221::LEDMATRIX);
 
+// LED Ring
+#define NUM_PIXEL 16
+Adafruit_NeoPixel neopixel(NUM_PIXEL, LED_RING, NEO_GRB + NEO_KHZ800);
 
-Adafruit_NeoPixel np(16, LED_RING, NEO_GRB + NEO_KHZ800);
+// RGB Sensor
+#define RGB_R_VALUE_THRESH 2000
+#define RGB_HITS_THRESH 20
+Adafruit_TCS34725 rgb_sensor =
+    Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_24MS, TCS34725_GAIN_1X);
+int RGB_hits = 0; // counts the hits of RGB color sensor
+int old_time_in_ms = millis();
 
+// Task Attachment
 void TaskPotentiometerReadout(void *pvParameters);
 void TaskWiringReadout(void *pvParameters);
 void TaskPiezoButtonReadout(void *pvParameters);
 void TaskControlPuzzleState(void *pvParameters);
 void TaskRefreshLedMatrix(void *pvParameters);
+void TaskRgbSensorReadout(void *pvParameters);
 
 void setup() {
 
@@ -65,6 +77,8 @@ void setup() {
   pinMode(BUTTON_0, INPUT);
   pinMode(BUTTON_1, INPUT);
 
+  pinMode(LOCK_0, OUTPUT);
+
   // Init PWM Signals for Buzzers
   ledcSetup(LEDC_CHANNEL1, 2000, LEDC_RESOLUTION);
   ledcAttachPin(PIEZO_0, LEDC_CHANNEL1);
@@ -77,7 +91,22 @@ void setup() {
   ledm1.commit();
 
   // Init LED ring
-  np.begin();
+  neopixel.begin();
+  neopixel.setBrightness(50);
+  neopixel.show();
+
+  for (uint8_t i = 0; i < NUM_PIXEL; i++) {
+    neopixel.setPixelColor(i, neopixel.Color(255, 0, 0));
+    neopixel.show();
+  }
+
+  // Init TCS Sensor
+  if (rgb_sensor.begin()) {
+    Serial.println("Found sensor");
+  } else {
+    Serial.println("No TCS34725 found ... check your connections");
+    // TODO: check connection
+  }
 
   Serial.println("Setup finished");
 
@@ -92,6 +121,8 @@ void setup() {
                           2048, NULL, 4, NULL, 1);
   xTaskCreatePinnedToCore(TaskRefreshLedMatrix, "TaskRefreshLedMatrix", 2048,
                           NULL, 5, NULL, 0);
+  xTaskCreatePinnedToCore(TaskRgbSensorReadout, "TaskRgbSensorReadout", 2048,
+                          NULL, 2, NULL, 1);
 }
 
 void loop() {
@@ -152,11 +183,11 @@ void TaskWiringReadout(void *pvParameters) {
       // Serial.println(rewiringValues0[i]);
     }
 
-    if ((rewiringValues0[0] >= 3 || rewiringValues0[0] <= 7) &&
-        (rewiringValues0[1] >= 9 || rewiringValues0[1] <= 13) &&
-        (rewiringValues0[2] >= 16 || rewiringValues0[2] <= 20) &&
-        (rewiringValues0[3] >= 23 || rewiringValues0[3] <= 27) &&
-        (rewiringValues0[4] >= 31 || rewiringValues0[4] <= 35)) {
+    if ((rewiringValues0[0] >= 3 && rewiringValues0[0] <= 7) &&
+        (rewiringValues0[1] >= 9 && rewiringValues0[1] <= 13) &&
+        (rewiringValues0[2] >= 16 && rewiringValues0[2] <= 20) &&
+        (rewiringValues0[3] >= 23 && rewiringValues0[3] <= 27) &&
+        (rewiringValues0[4] >= 31 && rewiringValues0[4] <= 35)) {
       Serial.println("Rewiring 0 solved!");
       puzzleStateRewiring0 = SOLVED;
     } else {
@@ -165,6 +196,62 @@ void TaskWiringReadout(void *pvParameters) {
     }
 
     vTaskDelay(500);
+  }
+}
+
+void TaskRgbSensorReadout(void *pvParameters) {
+  (void)pvParameters;
+  for (;;) {
+    uint16_t r, g, b, c, colorTemp, lux;
+
+    rgb_sensor.getRawData(&r, &g, &b, &c);
+    colorTemp = rgb_sensor.calculateColorTemperature(r, g, b);
+    lux = rgb_sensor.calculateLux(r, g, b);
+
+    // Serial.print("Color Temp: ");
+    // Serial.print(colorTemp, DEC);
+    // Serial.print(" K - ");
+    // Serial.print("Lux: ");
+    // Serial.print(lux, DEC);
+    // Serial.print(" - ");
+    // Serial.print("R: ");
+    // Serial.print(r, DEC);
+    // Serial.print(" ");
+    // Serial.print("G: ");
+    // Serial.print(g, DEC);
+    // Serial.print(" ");
+    // Serial.print("B: ");
+    // Serial.print(b, DEC);
+    // Serial.print(" ");
+    // Serial.print("C: ");
+    // Serial.print(c, DEC);
+    // Serial.print(" ");
+    // Serial.println(" ");
+
+    if (r >= RGB_R_VALUE_THRESH) {
+      neopixel.setPixelColor(
+          RGB_hits, neopixel.Color(0, 255, 0)); // Moderately bright green color.
+      neopixel.show(); // This sends the updated pixel color to the hardware.
+      RGB_hits++;
+      old_time_in_ms = millis();
+      if (RGB_hits == 16) {
+        digitalWrite(LOCK_0, HIGH);
+      } 
+    }
+    int time_in_ms = millis() - old_time_in_ms;
+
+    if (time_in_ms >= 1000 && RGB_hits < 16) {
+      if (RGB_hits > 0) {
+
+        RGB_hits--;
+      }
+      neopixel.setPixelColor(
+          RGB_hits, neopixel.Color(255, 0, 0)); // Moderately bright green color.
+      neopixel.show(); // This sends the updated pixel color to the hardware.
+      old_time_in_ms = millis();
+    }
+
+    vTaskDelay(100);
   }
 }
 
