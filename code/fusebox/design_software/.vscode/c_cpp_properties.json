@@ -8,6 +8,8 @@
             "includePath": [
                 "/home/jay/Documents/Dev/integration/second-door/code/fusebox/design_software/include",
                 "/home/jay/Documents/Dev/integration/second-door/code/fusebox/design_software/src",
+                "/home/jay/.platformio/lib/Adafruit TCS34725_ID665",
+                "/home/jay/.platformio/packages/framework-arduinoespressif32/libraries/Wire/src",
                 "/home/jay/.platformio/lib/Adafruit NeoPixel_ID28",
                 "/home/jay/.platformio/packages/framework-arduinoespressif32/libraries/SPI/src",
                 "/home/jay/.platformio/packages/framework-arduinoespressif32/tools/sdk/include/config",
@@ -68,7 +70,6 @@
                 "/home/jay/.platformio/packages/framework-arduinoespressif32/tools/sdk/include/fb_gfx",
                 "/home/jay/.platformio/packages/framework-arduinoespressif32/cores/esp32",
                 "/home/jay/.platformio/packages/framework-arduinoespressif32/variants/esp32",
-                "/home/jay/.platformio/lib/Adafruit TCS34725_ID665",
                 "/home/jay/.platformio/packages/framework-arduinoespressif32/libraries/ArduinoOTA/src",
                 "/home/jay/.platformio/packages/framework-arduinoespressif32/libraries/AsyncUDP/src",
                 "/home/jay/.platformio/packages/framework-arduinoespressif32/libraries/AzureIoT/src",
@@ -93,7 +94,6 @@
                 "/home/jay/.platformio/packages/framework-arduinoespressif32/libraries/WebServer/src",
                 "/home/jay/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src",
                 "/home/jay/.platformio/packages/framework-arduinoespressif32/libraries/WiFiClientSecure/src",
-                "/home/jay/.platformio/packages/framework-arduinoespressif32/libraries/Wire/src",
                 "/home/jay/.platformio/packages/tool-unity",
                 ""
             ],
@@ -102,6 +102,8 @@
                 "path": [
                     "/home/jay/Documents/Dev/integration/second-door/code/fusebox/design_software/include",
                     "/home/jay/Documents/Dev/integration/second-door/code/fusebox/design_software/src",
+                    "/home/jay/.platformio/lib/Adafruit TCS34725_ID665",
+                    "/home/jay/.platformio/packages/framework-arduinoespressif32/libraries/Wire/src",
                     "/home/jay/.platformio/lib/Adafruit NeoPixel_ID28",
                     "/home/jay/.platformio/packages/framework-arduinoespressif32/libraries/SPI/src",
                     "/home/jay/.platformio/packages/framework-arduinoespressif32/tools/sdk/include/config",
@@ -162,7 +164,6 @@
                     "/home/jay/.platformio/packages/framework-arduinoespressif32/tools/sdk/include/fb_gfx",
                     "/home/jay/.platformio/packages/framework-arduinoespressif32/cores/esp32",
                     "/home/jay/.platformio/packages/framework-arduinoespressif32/variants/esp32",
-                    "/home/jay/.platformio/lib/Adafruit TCS34725_ID665",
                     "/home/jay/.platformio/packages/framework-arduinoespressif32/libraries/ArduinoOTA/src",
                     "/home/jay/.platformio/packages/framework-arduinoespressif32/libraries/AsyncUDP/src",
                     "/home/jay/.platformio/packages/framework-arduinoespressif32/libraries/AzureIoT/src",
@@ -187,7 +188,6 @@
                     "/home/jay/.platformio/packages/framework-arduinoespressif32/libraries/WebServer/src",
                     "/home/jay/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src",
                     "/home/jay/.platformio/packages/framework-arduinoespressif32/libraries/WiFiClientSecure/src",
-                    "/home/jay/.platformio/packages/framework-arduinoespressif32/libraries/Wire/src",
                     "/home/jay/.platformio/packages/tool-unity",
                     ""
                 ]
