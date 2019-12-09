@@ -9,6 +9,12 @@
 #define RGB_RING_PIN       18
 #define NUM_PIXEL          16
 
+// setting PWM properties
+const int freq = 50;
+const int ledChannel = 0;
+const int resolution = 10; //Resolution 8, 10, 12, 15
+const int duty_50 = 512;
+
 //Laser dedector
 int detectorPin = 19;
 
@@ -44,6 +50,13 @@ uint8_t  analyse_sequence(uint8_t sequence[6], uint8_t target){
 void setup() {
   //Beginn der seriellen Kommunikation
   Serial.begin(9600);
+
+    // configure LED PWM functionalitites
+  ledcSetup(ledChannel, freq, resolution);
+  
+  // attach the channel to the GPIO2 to be controlled
+  ledcAttachPin(LASER_PIN, ledChannel);
+  ledcWrite(ledChannel,512);
 
    // set led ring to red
   pixels.begin();
@@ -90,7 +103,6 @@ void loop() {
         numberOfSequences = 0;
       }
     }
-    
     int time_in_ms = millis() - old_time_in_ms;
 
     if (time_in_ms >= 500){
