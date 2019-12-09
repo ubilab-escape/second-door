@@ -88,3 +88,6 @@ eagle.epf
 ._*
 .Spotlight-V100
 .Trashes
+
+# Platformio files
+.pio
