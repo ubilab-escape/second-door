@@ -26,6 +26,9 @@ Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUM_PIXEL, RGB_RING_PIN, NEO_GRB + 
 uint8_t sequence[6];
 
 uint8_t numberOfSequences = 0;
+
+int old_time_in_ms = millis();
+
 //Functions
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -87,6 +90,7 @@ void loop() {
       Serial.print("Sequence dedected ");
       Serial.print(zeros);Serial.print(" ");Serial.println(ones);
       numberOfSequences++;
+      old_time_in_ms = millis(); 
 
       if (numberOfSequences % 2 == 0){
             uint8_t RGB_led = (uint8_t)numberOfSequences/2;
@@ -98,6 +102,12 @@ void loop() {
         Serial.println("Fuse Box open");
         numberOfSequences = 0;
       }
+    }
+    int time_in_ms = millis() - old_time_in_ms;
+
+    if (time_in_ms >= 500){
+      if (numberOfSequences > 0){
+        numberOfSequences--;
     }
     
   }
