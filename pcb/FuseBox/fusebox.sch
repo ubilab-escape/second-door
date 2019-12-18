@@ -11901,161 +11901,6 @@ Created by Upverter.com</description>
 </deviceset>
 </devicesets>
 </library>
-<library name="transistor-power" urn="urn:adsk.eagle:library:400">
-<description>&lt;b&gt;Power Transistors&lt;/b&gt;&lt;p&gt;
-&lt;author&gt;Created by librarian@cadsoft.de&lt;/author&gt;</description>
-<packages>
-<package name="TO220BV" urn="urn:adsk.eagle:footprint:29371/1" library_version="4">
-<description>&lt;b&gt;Molded Package&lt;/b&gt;&lt;p&gt;
-grid 2.54 mm</description>
-<wire x1="4.699" y1="-4.318" x2="4.953" y2="-4.064" width="0.1524" layer="21"/>
-<wire x1="4.699" y1="-4.318" x2="-4.699" y2="-4.318" width="0.1524" layer="21"/>
-<wire x1="-4.953" y1="-4.064" x2="-4.699" y2="-4.318" width="0.1524" layer="21"/>
-<wire x1="5.08" y1="-1.143" x2="4.953" y2="-4.064" width="0.1524" layer="21"/>
-<wire x1="-4.953" y1="-4.064" x2="-5.08" y2="-1.143" width="0.1524" layer="21"/>
-<circle x="-4.4958" y="-3.7084" radius="0.254" width="0" layer="21"/>
-<pad name="G" x="-2.54" y="-2.54" drill="1.016" shape="long" rot="R90"/>
-<pad name="D" x="0" y="-2.54" drill="1.016" shape="long" rot="R90"/>
-<pad name="S" x="2.54" y="-2.54" drill="1.016" shape="long" rot="R90"/>
-<text x="-5.08" y="-6.0452" size="1.27" layer="25" ratio="10">&gt;NAME</text>
-<text x="-5.08" y="-7.62" size="1.27" layer="27" ratio="10">&gt;VALUE</text>
-<rectangle x1="-5.334" y1="-0.762" x2="5.334" y2="0" layer="21"/>
-<rectangle x1="-5.334" y1="-1.27" x2="-3.429" y2="-0.762" layer="21"/>
-<rectangle x1="-1.651" y1="-1.27" x2="-0.889" y2="-0.762" layer="21"/>
-<rectangle x1="-3.429" y1="-1.27" x2="-1.651" y2="-0.762" layer="51"/>
-<rectangle x1="0.889" y1="-1.27" x2="1.651" y2="-0.762" layer="21"/>
-<rectangle x1="3.429" y1="-1.27" x2="5.334" y2="-0.762" layer="21"/>
-<rectangle x1="-0.889" y1="-1.27" x2="0.889" y2="-0.762" layer="51"/>
-<rectangle x1="1.651" y1="-1.27" x2="3.429" y2="-0.762" layer="51"/>
-</package>
-<package name="TO220BH" urn="urn:adsk.eagle:footprint:29377/1" library_version="4">
-<description>&lt;b&gt;Molded Package&lt;/b&gt;&lt;p&gt;
-grid 2.54 mm</description>
-<wire x1="-5.207" y1="-1.27" x2="5.207" y2="-1.27" width="0.1524" layer="21"/>
-<wire x1="5.207" y1="14.605" x2="-5.207" y2="14.605" width="0.1524" layer="21"/>
-<wire x1="5.207" y1="-1.27" x2="5.207" y2="11.176" width="0.1524" layer="21"/>
-<wire x1="5.207" y1="11.176" x2="4.318" y2="11.176" width="0.1524" layer="21"/>
-<wire x1="4.318" y1="11.176" x2="4.318" y2="12.7" width="0.1524" layer="21"/>
-<wire x1="4.318" y1="12.7" x2="5.207" y2="12.7" width="0.1524" layer="21"/>
-<wire x1="5.207" y1="12.7" x2="5.207" y2="14.605" width="0.1524" layer="21"/>
-<wire x1="-5.207" y1="-1.27" x2="-5.207" y2="11.176" width="0.1524" layer="21"/>
-<wire x1="-5.207" y1="11.176" x2="-4.318" y2="11.176" width="0.1524" layer="21"/>
-<wire x1="-4.318" y1="11.176" x2="-4.318" y2="12.7" width="0.1524" layer="21"/>
-<wire x1="-4.318" y1="12.7" x2="-5.207" y2="12.7" width="0.1524" layer="21"/>
-<wire x1="-5.207" y1="12.7" x2="-5.207" y2="14.605" width="0.1524" layer="21"/>
-<wire x1="-4.572" y1="-0.635" x2="4.572" y2="-0.635" width="0.0508" layer="21"/>
-<wire x1="4.572" y1="7.62" x2="4.572" y2="-0.635" width="0.0508" layer="21"/>
-<wire x1="4.572" y1="7.62" x2="-4.572" y2="7.62" width="0.0508" layer="21"/>
-<wire x1="-4.572" y1="-0.635" x2="-4.572" y2="7.62" width="0.0508" layer="21"/>
-<circle x="0" y="11.176" radius="1.8034" width="0.1524" layer="21"/>
-<circle x="0" y="11.176" radius="4.191" width="0" layer="42"/>
-<circle x="0" y="11.176" radius="4.191" width="0" layer="43"/>
-<pad name="G" x="-2.54" y="-6.35" drill="1.1176" shape="long" rot="R90"/>
-<pad name="D" x="0" y="-6.35" drill="1.1176" shape="long" rot="R90"/>
-<pad name="S" x="2.54" y="-6.35" drill="1.1176" shape="long" rot="R90"/>
-<text x="-3.81" y="5.207" size="1.778" layer="25" ratio="10">&gt;NAME</text>
-<text x="-3.937" y="2.54" size="1.778" layer="27" ratio="10">&gt;VALUE</text>
-<text x="-4.445" y="7.874" size="1.016" layer="21" ratio="10">A17,5mm</text>
-<rectangle x1="2.159" y1="-4.699" x2="2.921" y2="-4.064" layer="21"/>
-<rectangle x1="-0.381" y1="-4.699" x2="0.381" y2="-4.064" layer="21"/>
-<rectangle x1="-2.921" y1="-4.699" x2="-2.159" y2="-4.064" layer="21"/>
-<rectangle x1="-3.175" y1="-4.064" x2="-1.905" y2="-1.27" layer="21"/>
-<rectangle x1="-0.635" y1="-4.064" x2="0.635" y2="-1.27" layer="21"/>
-<rectangle x1="1.905" y1="-4.064" x2="3.175" y2="-1.27" layer="21"/>
-<rectangle x1="-2.921" y1="-6.604" x2="-2.159" y2="-4.699" layer="51"/>
-<rectangle x1="-0.381" y1="-6.604" x2="0.381" y2="-4.699" layer="51"/>
-<rectangle x1="2.159" y1="-6.604" x2="2.921" y2="-4.699" layer="51"/>
-<hole x="0" y="11.176" drill="3.302"/>
-</package>
-</packages>
-<packages3d>
-<package3d name="TO220BV" urn="urn:adsk.eagle:package:29484/3" type="model" library_version="4">
-<description>Molded Package
-grid 2.54 mm</description>
-<packageinstances>
-<packageinstance name="TO220BV"/>
-</packageinstances>
-</package3d>
-<package3d name="TO220BH" urn="urn:adsk.eagle:package:29490/1" type="box" library_version="4">
-<description>Molded Package
-grid 2.54 mm</description>
-<packageinstances>
-<packageinstance name="TO220BH"/>
-</packageinstances>
-</package3d>
-</packages3d>
-<symbols>
-<symbol name="MFN" urn="urn:adsk.eagle:symbol:29376/1" library_version="4">
-<wire x1="-1.1176" y1="2.413" x2="-1.1176" y2="-2.54" width="0.254" layer="94"/>
-<wire x1="-1.1176" y1="-2.54" x2="-2.54" y2="-2.54" width="0.1524" layer="94"/>
-<wire x1="2.54" y1="1.905" x2="0.5334" y2="1.905" width="0.1524" layer="94"/>
-<wire x1="2.54" y1="2.54" x2="2.54" y2="1.905" width="0.1524" layer="94"/>
-<wire x1="2.54" y1="0" x2="2.54" y2="-1.905" width="0.1524" layer="94"/>
-<wire x1="0.508" y1="-1.905" x2="2.54" y2="-1.905" width="0.1524" layer="94"/>
-<wire x1="2.54" y1="-1.905" x2="2.54" y2="-2.54" width="0.1524" layer="94"/>
-<wire x1="0.508" y1="0" x2="1.778" y2="-0.508" width="0.1524" layer="94"/>
-<wire x1="1.778" y1="-0.508" x2="1.778" y2="0.508" width="0.1524" layer="94"/>
-<wire x1="1.778" y1="0.508" x2="0.508" y2="0" width="0.1524" layer="94"/>
-<wire x1="1.651" y1="0" x2="2.54" y2="0" width="0.1524" layer="94"/>
-<wire x1="1.651" y1="0.254" x2="0.762" y2="0" width="0.3048" layer="94"/>
-<wire x1="0.762" y1="0" x2="1.651" y2="-0.254" width="0.3048" layer="94"/>
-<wire x1="1.651" y1="-0.254" x2="1.651" y2="0" width="0.3048" layer="94"/>
-<wire x1="1.651" y1="0" x2="1.397" y2="0" width="0.3048" layer="94"/>
-<circle x="2.54" y="-1.905" radius="0.127" width="0.4064" layer="94"/>
-<text x="5.08" y="2.54" size="1.778" layer="95">&gt;NAME</text>
-<text x="5.08" y="0" size="1.778" layer="96">&gt;VALUE</text>
-<text x="1.27" y="2.54" size="0.8128" layer="93">D</text>
-<text x="1.27" y="-3.175" size="0.8128" layer="93">S</text>
-<text x="-2.54" y="-1.27" size="0.8128" layer="93">G</text>
-<rectangle x1="-0.254" y1="-2.54" x2="0.508" y2="-1.27" layer="94"/>
-<rectangle x1="-0.254" y1="1.27" x2="0.508" y2="2.54" layer="94"/>
-<rectangle x1="-0.254" y1="-0.889" x2="0.508" y2="0.889" layer="94"/>
-<pin name="G" x="-2.54" y="-2.54" visible="off" length="point" direction="pas"/>
-<pin name="D" x="2.54" y="5.08" visible="off" length="short" direction="pas" rot="R270"/>
-<pin name="S" x="2.54" y="-5.08" visible="off" length="short" direction="pas" rot="R90"/>
-</symbol>
-</symbols>
-<devicesets>
-<deviceset name="PMOSFET_N" urn="urn:adsk.eagle:component:29568/4" prefix="Q" uservalue="yes" library_version="4">
-<description>&lt;b&gt;Power MOSFET N-Channel&lt;/b&gt;</description>
-<gates>
-<gate name="G$1" symbol="MFN" x="0" y="0"/>
-</gates>
-<devices>
-<device name="TO220BV" package="TO220BV">
-<connects>
-<connect gate="G$1" pin="D" pad="D"/>
-<connect gate="G$1" pin="G" pad="G"/>
-<connect gate="G$1" pin="S" pad="S"/>
-</connects>
-<package3dinstances>
-<package3dinstance package3d_urn="urn:adsk.eagle:package:29484/3"/>
-</package3dinstances>
-<technologies>
-<technology name="">
-<attribute name="POPULARITY" value="1" constant="no"/>
-</technology>
-</technologies>
-</device>
-<device name="TO220BH" package="TO220BH">
-<connects>
-<connect gate="G$1" pin="D" pad="D"/>
-<connect gate="G$1" pin="G" pad="G"/>
-<connect gate="G$1" pin="S" pad="S"/>
-</connects>
-<package3dinstances>
-<package3dinstance package3d_urn="urn:adsk.eagle:package:29490/1"/>
-</package3dinstances>
-<technologies>
-<technology name="">
-<attribute name="POPULARITY" value="0" constant="no"/>
-</technology>
-</technologies>
-</device>
-</devices>
-</deviceset>
-</devicesets>
-</library>
 <library name="diode" urn="urn:adsk.eagle:library:210">
 <description>&lt;b&gt;Diodes&lt;/b&gt;&lt;p&gt;
 Based on the following sources:
@@ -14798,6 +14643,105 @@ Source: http://www.farnell.com/datasheets/716597.pdf</description>
 </deviceset>
 </devicesets>
 </library>
+<library name="Infineon - IRLB8721PbF">
+<description>Upverter Parts Library
+
+Created by Upverter.com</description>
+<packages>
+<package name="INFINEON_IRLB8721PBF_0" urn="urn:adsk.eagle:footprint:15923355/1" library_version="1">
+<description>High Frequency Synchronous Buck  Converter</description>
+<wire x1="-2.097" y1="-5.08" x2="-2.097" y2="5.08" width="0.15" layer="51"/>
+<wire x1="-2.097" y1="5.08" x2="2.097" y2="5.08" width="0.15" layer="51"/>
+<wire x1="2.097" y1="5.08" x2="2.097" y2="-5.08" width="0.15" layer="51"/>
+<wire x1="2.097" y1="-5.08" x2="-2.097" y2="-5.08" width="0.15" layer="51"/>
+<wire x1="-2.097" y1="4.064" x2="-2.097" y2="-4.064" width="0.15" layer="21"/>
+<wire x1="-2.097" y1="-4.064" x2="2.097" y2="-5.08" width="0.15" layer="21"/>
+<wire x1="2.097" y1="-5.03" x2="2.097" y2="5.03" width="0.3" layer="21"/>
+<wire x1="2.097" y1="5.08" x2="-2.097" y2="4.064" width="0.15" layer="21"/>
+<wire x1="-2.515" y1="-5.435" x2="-2.515" y2="5.435" width="0.1" layer="39"/>
+<wire x1="-2.515" y1="5.435" x2="2.515" y2="5.435" width="0.1" layer="39"/>
+<wire x1="2.515" y1="5.435" x2="2.515" y2="-5.435" width="0.1" layer="39"/>
+<wire x1="2.515" y1="-5.435" x2="-2.515" y2="-5.435" width="0.1" layer="39"/>
+<text x="2.88" y="4.997" size="1" layer="25" rot="R270">&gt;NAME</text>
+<circle x="-1.025" y="5.23" radius="0.25" width="0" layer="21"/>
+<pad name="1" x="-0.378" y="2.54" drill="1.35" diameter="2.05" shape="square"/>
+<pad name="2" x="-0.378" y="0" drill="1.35" diameter="2.05"/>
+<pad name="3" x="-0.378" y="-2.54" drill="1.35" diameter="2.05"/>
+</package>
+</packages>
+<packages3d>
+<package3d name="INFINEON_IRLB8721PBF_0" urn="urn:adsk.eagle:package:15923357/1" type="box" library_version="1">
+<description>High Frequency Synchronous Buck  Converter</description>
+<packageinstances>
+<packageinstance name="INFINEON_IRLB8721PBF_0"/>
+</packageinstances>
+</package3d>
+</packages3d>
+<symbols>
+<symbol name="INFINEON_IRLB8721PBF_0_0" urn="urn:adsk.eagle:symbol:15923356/1" library_version="1">
+<description>High Frequency Synchronous Buck  Converter</description>
+<wire x1="1.016" y1="-6.604" x2="1.016" y2="-3.556" width="0.508" layer="94"/>
+<wire x1="1.778" y1="-7.62" x2="1.778" y2="-2.54" width="0.508" layer="94"/>
+<wire x1="1.778" y1="-7.112" x2="5.08" y2="-7.112" width="0.508" layer="94"/>
+<wire x1="1.778" y1="-3.048" x2="5.08" y2="-3.048" width="0.508" layer="94"/>
+<wire x1="2.286" y1="-7.112" x2="3.556" y2="-6.35" width="0.508" layer="94"/>
+<wire x1="2.286" y1="-7.112" x2="3.556" y2="-7.874" width="0.508" layer="94"/>
+<wire x1="3.556" y1="-6.35" x2="3.556" y2="-7.874" width="0.508" layer="94"/>
+<wire x1="3.302" y1="-6.858" x2="3.302" y2="-7.62" width="0.508" layer="94"/>
+<wire x1="0" y1="-5.08" x2="1.016" y2="-5.08" width="0.15" layer="94"/>
+<wire x1="5.08" y1="-7.62" x2="5.08" y2="-7.112" width="0.15" layer="94"/>
+<wire x1="5.08" y1="-2.54" x2="5.08" y2="-3.048" width="0.15" layer="94"/>
+<text x="8.382" y="-2.54" size="2.54" layer="95" align="top-left">&gt;NAME</text>
+<text x="8.382" y="-5.334" size="2.54" layer="95" align="top-left">IRLB8721PbF</text>
+<pin name="G" x="-5.08" y="-5.08" visible="pad" length="middle"/>
+<pin name="S" x="5.08" y="-12.7" visible="pad" length="middle" rot="R90"/>
+<pin name="D" x="5.08" y="2.54" visible="pad" length="middle" rot="R270"/>
+</symbol>
+</symbols>
+<devicesets>
+<deviceset name="INFINEON_IRLB8721PBF" urn="urn:adsk.eagle:component:15923358/1" prefix="Q" library_version="1">
+<description>High Frequency Synchronous Buck  Converter</description>
+<gates>
+<gate name="G$0" symbol="INFINEON_IRLB8721PBF_0_0" x="0" y="0"/>
+</gates>
+<devices>
+<device name="INFINEON_IRLB8721PBF_0_0" package="INFINEON_IRLB8721PBF_0">
+<connects>
+<connect gate="G$0" pin="D" pad="2"/>
+<connect gate="G$0" pin="G" pad="1"/>
+<connect gate="G$0" pin="S" pad="3"/>
+</connects>
+<package3dinstances>
+<package3dinstance package3d_urn="urn:adsk.eagle:package:15923357/1"/>
+</package3dinstances>
+<technologies>
+<technology name="">
+<attribute name="CENTROID_NOT_SPECIFIED" value="No"/>
+<attribute name="DATASHEET" value="https://upverter.com/datasheet/6023de1dc29e00ae136963535d37ebb95ee78d8c.pdf"/>
+<attribute name="DIGIKEY_DESCRIPTION" value="TRANS MOSFET N-CH 30V 62A TO-220AB"/>
+<attribute name="DIGIKEY_PART_NUMBER" value="IRLB8721PBF-ND"/>
+<attribute name="IMPORTED_FROM" value="octopart"/>
+<attribute name="IPC_LAND_PATTERN_NAME" value="TO-220"/>
+<attribute name="LEAD_FREE" value="yes"/>
+<attribute name="MF" value="Infineon"/>
+<attribute name="MOUNTING_TYPE" value="through hole"/>
+<attribute name="MOUSER_PART_NUMBER" value="942-IRLB8721PBF"/>
+<attribute name="MPN" value="IRLB8721PbF"/>
+<attribute name="NUM_PINS" value="3"/>
+<attribute name="PACKAGE" value="TO220AB-3"/>
+<attribute name="PREFIX" value="Q"/>
+<attribute name="ROHS" value="yes"/>
+<attribute name="SYMBOL_0_0" value="N-Channel Enhanced MOSFET"/>
+<attribute name="TEMPERATURE_RANGE_HIGH" value="+175°C"/>
+<attribute name="TEMPERATURE_RANGE_LOW" value="-55°C"/>
+<attribute name="TYPE" value="transistor"/>
+</technology>
+</technologies>
+</device>
+</devices>
+</deviceset>
+</devicesets>
+</library>
 </libraries>
 <attributes>
 </attributes>
@@ -14889,7 +14833,6 @@ Source: http://www.farnell.com/datasheets/716597.pdf</description>
 <part name="GND20" library="supply1" library_urn="urn:adsk.eagle:library:371" deviceset="GND" device=""/>
 <part name="X3" library="con-wago-500" library_urn="urn:adsk.eagle:library:195" deviceset="W237-102" device="" package3d_urn="urn:adsk.eagle:package:10688/1"/>
 <part name="X4" library="con-wago-500" library_urn="urn:adsk.eagle:library:195" deviceset="W237-103" device="" package3d_urn="urn:adsk.eagle:package:10691/1"/>
-<part name="Q1" library="transistor-power" library_urn="urn:adsk.eagle:library:400" deviceset="PMOSFET_N" device="TO220BV" package3d_urn="urn:adsk.eagle:package:29484/3" value="IRF510PbF"/>
 <part name="X5" library="con-wago-500" library_urn="urn:adsk.eagle:library:195" deviceset="W237-102" device="" package3d_urn="urn:adsk.eagle:package:10688/1"/>
 <part name="P+8" library="supply1" library_urn="urn:adsk.eagle:library:371" deviceset="+12V" device=""/>
 <part name="D1" library="diode" library_urn="urn:adsk.eagle:library:210" deviceset="1N4004" device="" package3d_urn="urn:adsk.eagle:package:43336/1"/>
@@ -14974,6 +14917,9 @@ Source: http://www.farnell.com/datasheets/716597.pdf</description>
 <part name="TP15" library="testpad" library_urn="urn:adsk.eagle:library:385" deviceset="TP" device="B1,27" package3d_urn="urn:adsk.eagle:package:27944/2"/>
 <part name="TP16" library="testpad" library_urn="urn:adsk.eagle:library:385" deviceset="TP" device="B1,27" package3d_urn="urn:adsk.eagle:package:27944/2"/>
 <part name="TP17" library="testpad" library_urn="urn:adsk.eagle:library:385" deviceset="TP" device="B1,27" package3d_urn="urn:adsk.eagle:package:27944/2"/>
+<part name="Q2" library="Infineon - IRLB8721PbF" deviceset="INFINEON_IRLB8721PBF" device="INFINEON_IRLB8721PBF_0_0" package3d_urn="urn:adsk.eagle:package:15923357/1"/>
+<part name="R36" library="rcl" library_urn="urn:adsk.eagle:library:334" deviceset="R-EU_" device="R0805" package3d_urn="urn:adsk.eagle:package:23553/2" value="10k"/>
+<part name="GND37" library="supply1" library_urn="urn:adsk.eagle:library:371" deviceset="GND" device=""/>
 </parts>
 <sheets>
 <sheet>
@@ -16424,10 +16370,6 @@ they're connected to integrated SPI Flash</text>
 <attribute name="VALUE" x="111.76" y="146.177" size="1.778" layer="96"/>
 <attribute name="NAME" x="114.3" y="150.749" size="1.778" layer="95" rot="R180"/>
 </instance>
-<instance part="Q1" gate="G$1" x="200.66" y="111.76" smashed="yes" rot="MR0">
-<attribute name="NAME" x="195.58" y="114.3" size="1.778" layer="95" rot="MR0"/>
-<attribute name="VALUE" x="195.58" y="111.76" size="1.778" layer="96" rot="MR0"/>
-</instance>
 <instance part="X5" gate="-1" x="187.96" y="127" smashed="yes">
 <attribute name="NAME" x="187.96" y="127.889" size="1.778" layer="95" rot="R180"/>
 </instance>
@@ -16442,8 +16384,8 @@ they're connected to integrated SPI Flash</text>
 <attribute name="NAME" x="213.8426" y="127" size="1.778" layer="95" rot="MR90"/>
 <attribute name="VALUE" x="211.0486" y="127" size="1.778" layer="96" rot="MR90"/>
 </instance>
-<instance part="GND21" gate="1" x="198.12" y="101.6" smashed="yes" rot="MR0">
-<attribute name="VALUE" x="200.66" y="99.06" size="1.778" layer="96" rot="MR0"/>
+<instance part="GND21" gate="1" x="198.12" y="96.52" smashed="yes" rot="MR0">
+<attribute name="VALUE" x="200.66" y="93.98" size="1.778" layer="96" rot="MR0"/>
 </instance>
 <instance part="X6" gate="-1" x="114.3" y="121.92" smashed="yes" rot="MR180">
 <attribute name="NAME" x="114.3" y="121.031" size="1.778" layer="95" rot="MR0"/>
@@ -16490,6 +16432,16 @@ they're connected to integrated SPI Flash</text>
 <instance part="GND14" gate="1" x="55.88" y="101.6" smashed="yes">
 <attribute name="VALUE" x="53.34" y="99.06" size="1.778" layer="96"/>
 </instance>
+<instance part="Q2" gate="G$0" x="193.04" y="114.3" smashed="yes">
+<attribute name="NAME" x="201.422" y="111.76" size="2.54" layer="95" align="top-left"/>
+</instance>
+<instance part="R36" gate="G$1" x="185.42" y="101.6" smashed="yes" rot="R90">
+<attribute name="NAME" x="183.9214" y="97.79" size="1.778" layer="95" rot="R90"/>
+<attribute name="VALUE" x="188.722" y="97.79" size="1.778" layer="96" rot="R90"/>
+</instance>
+<instance part="GND37" gate="1" x="185.42" y="91.44" smashed="yes" rot="MR0">
+<attribute name="VALUE" x="187.96" y="88.9" size="1.778" layer="96" rot="MR0"/>
+</instance>
 </instances>
 <busses>
 </busses>
@@ -16516,11 +16468,6 @@ they're connected to integrated SPI Flash</text>
 <pinref part="X3" gate="-2" pin="KL"/>
 </segment>
 <segment>
-<pinref part="Q1" gate="G$1" pin="S"/>
-<wire x1="198.12" y1="106.68" x2="198.12" y2="104.14" width="0.1524" layer="91"/>
-<pinref part="GND21" gate="1" pin="GND"/>
-</segment>
-<segment>
 <pinref part="GND22" gate="1" pin="GND"/>
 <wire x1="124.46" y1="116.84" x2="124.46" y2="121.92" width="0.1524" layer="91"/>
 <pinref part="X6" gate="-1" pin="KL"/>
@@ -16537,6 +16484,16 @@ they're connected to integrated SPI Flash</text>
 <wire x1="55.88" y1="104.14" x2="55.88" y2="109.22" width="0.1524" layer="91"/>
 <pinref part="X2" gate="-3" pin="KL"/>
 <wire x1="55.88" y1="109.22" x2="50.8" y2="109.22" width="0.1524" layer="91"/>
+</segment>
+<segment>
+<pinref part="GND21" gate="1" pin="GND"/>
+<pinref part="Q2" gate="G$0" pin="S"/>
+<wire x1="198.12" y1="99.06" x2="198.12" y2="101.6" width="0.1524" layer="91"/>
+</segment>
+<segment>
+<pinref part="GND37" gate="1" pin="GND"/>
+<pinref part="R36" gate="G$1" pin="1"/>
+<wire x1="185.42" y1="93.98" x2="185.42" y2="96.52" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="SPI_MOSI" class="0">
@@ -16570,9 +16527,13 @@ they're connected to integrated SPI Flash</text>
 </net>
 <net name="LOCK_0" class="0">
 <segment>
-<pinref part="Q1" gate="G$1" pin="G"/>
-<wire x1="203.2" y1="109.22" x2="213.36" y2="109.22" width="0.1524" layer="91"/>
-<label x="213.36" y="109.22" size="1.778" layer="95" rot="MR180" xref="yes"/>
+<wire x1="187.96" y1="109.22" x2="185.42" y2="109.22" width="0.1524" layer="91"/>
+<label x="182.88" y="109.22" size="1.778" layer="95" rot="MR0" xref="yes"/>
+<pinref part="Q2" gate="G$0" pin="G"/>
+<pinref part="R36" gate="G$1" pin="2"/>
+<wire x1="185.42" y1="109.22" x2="182.88" y2="109.22" width="0.1524" layer="91"/>
+<wire x1="185.42" y1="106.68" x2="185.42" y2="109.22" width="0.1524" layer="91"/>
+<junction x="185.42" y="109.22"/>
 </segment>
 </net>
 <net name="+12V" class="0">
@@ -16596,7 +16557,6 @@ they're connected to integrated SPI Flash</text>
 </net>
 <net name="N$25" class="0">
 <segment>
-<pinref part="Q1" gate="G$1" pin="D"/>
 <wire x1="198.12" y1="116.84" x2="198.12" y2="119.38" width="0.1524" layer="91"/>
 <pinref part="X5" gate="-2" pin="KL"/>
 <wire x1="198.12" y1="119.38" x2="198.12" y2="121.92" width="0.1524" layer="91"/>
@@ -16605,6 +16565,7 @@ they're connected to integrated SPI Flash</text>
 <wire x1="213.36" y1="121.92" x2="213.36" y2="119.38" width="0.1524" layer="91"/>
 <wire x1="213.36" y1="119.38" x2="198.12" y2="119.38" width="0.1524" layer="91"/>
 <junction x="198.12" y="119.38"/>
+<pinref part="Q2" gate="G$0" pin="D"/>
 </segment>
 </net>
 <net name="LASER_SENSE" class="0">
