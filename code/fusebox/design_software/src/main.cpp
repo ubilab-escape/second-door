@@ -33,8 +33,6 @@
 
 #define LOCK_0 14
 
-#define LED_RING 27
-
 enum tPuzzleState { INIT, SOLVED, NOT_SOLVED };
 
 tPuzzleState puzzleStateRewiring0;
@@ -43,17 +41,31 @@ tPuzzleState puzzleStatePotis;
 MAX7221 seg1 = MAX7221(MAX7221_CS, 1, MAX7221::SEGMENT);
 MAX7221 ledm1 = MAX7221(MAX7219_CS, 4, MAX7221::LEDMATRIX);
 
-// LED Ring
-#define NUM_PIXEL 16
-Adafruit_NeoPixel neopixel(NUM_PIXEL, LED_RING, NEO_GRB + NEO_KHZ800);
 
-// RGB Sensor
-#define RGB_R_VALUE_THRESH 2000
-#define RGB_HITS_THRESH 20
-Adafruit_TCS34725 rgb_sensor =
-    Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_24MS, TCS34725_GAIN_1X);
-int RGB_hits = 0; // counts the hits of RGB color sensor
+
+
+#define SEQUENDE_SIZE       5
+
+//RGB Ring
+#define RGB_RING_PIN       27
+#define NUM_PIXEL          16
+
+//Laser dedector
+#define detectorPin 19
+uint detectorPin = 19;
+
+Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUM_PIXEL, RGB_RING_PIN, NEO_GRB + NEO_KHZ800);
+
+uint8_t sequence[6];
+
+uint8_t numberOfSequences = 0;
+
 int old_time_in_ms = millis();
+
+bool puzzle_solved = false;
+
+
+
 
 // Task Attachment
 void TaskPotentiometerReadout(void *pvParameters);
@@ -199,61 +211,38 @@ void TaskWiringReadout(void *pvParameters) {
   }
 }
 
-void TaskRgbSensorReadout(void *pvParameters) {
-  (void)pvParameters;
-  for (;;) {
-    uint16_t r, g, b, c, colorTemp, lux;
-
-    rgb_sensor.getRawData(&r, &g, &b, &c);
-    colorTemp = rgb_sensor.calculateColorTemperature(r, g, b);
-    lux = rgb_sensor.calculateLux(r, g, b);
-
-    // Serial.print("Color Temp: ");
-    // Serial.print(colorTemp, DEC);
-    // Serial.print(" K - ");
-    // Serial.print("Lux: ");
-    // Serial.print(lux, DEC);
-    // Serial.print(" - ");
-    // Serial.print("R: ");
-    // Serial.print(r, DEC);
-    // Serial.print(" ");
-    // Serial.print("G: ");
-    // Serial.print(g, DEC);
-    // Serial.print(" ");
-    // Serial.print("B: ");
-    // Serial.print(b, DEC);
-    // Serial.print(" ");
-    // Serial.print("C: ");
-    // Serial.print(c, DEC);
-    // Serial.print(" ");
-    // Serial.println(" ");
-
-    if (r >= RGB_R_VALUE_THRESH) {
-      neopixel.setPixelColor(
-          RGB_hits, neopixel.Color(0, 255, 0)); // Moderately bright green color.
-      neopixel.show(); // This sends the updated pixel color to the hardware.
-      RGB_hits++;
-      old_time_in_ms = millis();
-      if (RGB_hits == 16) {
-        digitalWrite(LOCK_0, HIGH);
-      } 
+void blink_ring(uint8_t blinking_number, uint8_t frequency) {
+  uint16_t period = 1 * 1000 / frequency;
+  for (uint8_t k = 0; k < blinking_number; k++) {
+    for (int i = 0; i < NUM_PIXEL; i++) {
+      // pixels.Color takes RGB values, from 0,0,0 up to 255,255,255
+      pixels.setPixelColor(
+          i, pixels.Color(0, 0, 0)); // Moderately bright green color.
+      pixels.show(); // This sends the updated pixel color to the hardware.
     }
-    int time_in_ms = millis() - old_time_in_ms;
-
-    if (time_in_ms >= 1000 && RGB_hits < 16) {
-      if (RGB_hits > 0) {
-
-        RGB_hits--;
-      }
-      neopixel.setPixelColor(
-          RGB_hits, neopixel.Color(255, 0, 0)); // Moderately bright green color.
-      neopixel.show(); // This sends the updated pixel color to the hardware.
-      old_time_in_ms = millis();
+    delay(period / 2);
+    for (int i = 0; i < NUM_PIXEL; i++) {
+      // pixels.Color takes RGB values, from 0,0,0 up to 255,255,255
+      pixels.setPixelColor(
+          i, pixels.Color(0, 255, 0)); // Moderately bright green color.
+      pixels.show(); // This sends the updated pixel color to the hardware.
     }
-
-    vTaskDelay(100);
+    delay(period / 2);
   }
 }
+
+uint8_t  analyse_sequence(uint8_t sequence[6], uint8_t target){
+  uint8_t target_number = 0;
+  uint8_t len = sizeof(sequence);
+  for (int i=0; i<len; i++){
+    if (sequence[i] == target){
+      target_number++;
+    }
+  }
+  return target_number + 1;
+}
+
+
 
 void TaskControlPuzzleState(void *pvParameters) {
   (void)pvParameters;
