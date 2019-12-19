@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE eagle SYSTEM "eagle.dtd">
-<eagle version="9.5.2">
+<eagle version="9.5.0">
 <drawing>
 <settings>
 <setting alwaysvectorfont="no"/>
 <setting verticaltext="up"/>
 </settings>
-<grid distance="12.5" unitdist="mil" unit="mil" style="lines" multiple="1" display="yes" altdistance="12.5" altunitdist="mil" altunit="mil"/>
+<grid distance="12.5" unitdist="mil" unit="mm" style="lines" multiple="1" display="yes" altdistance="12.5" altunitdist="mil" altunit="mm"/>
 <layers>
 <layer number="1" name="Top" color="4" fill="1" visible="yes" active="yes"/>
-<layer number="2" name="GND" color="16" fill="1" visible="no" active="yes"/>
+<layer number="2" name="GND" color="16" fill="1" visible="yes" active="yes"/>
 <layer number="3" name="Route3" color="17" fill="1" visible="no" active="no"/>
 <layer number="4" name="Route4" color="18" fill="1" visible="no" active="no"/>
 <layer number="5" name="Route5" color="19" fill="1" visible="no" active="no"/>
@@ -22,7 +22,7 @@
 <layer number="12" name="Route12" color="20" fill="1" visible="no" active="no"/>
 <layer number="13" name="Route13" color="21" fill="1" visible="no" active="no"/>
 <layer number="14" name="Route14" color="22" fill="1" visible="no" active="no"/>
-<layer number="15" name="POWER" color="23" fill="1" visible="no" active="yes"/>
+<layer number="15" name="POWER" color="23" fill="1" visible="yes" active="yes"/>
 <layer number="16" name="Bottom" color="1" fill="1" visible="yes" active="yes"/>
 <layer number="17" name="Pads" color="2" fill="1" visible="yes" active="yes"/>
 <layer number="18" name="Vias" color="2" fill="1" visible="yes" active="yes"/>
@@ -52,7 +52,7 @@
 <layer number="42" name="bRestrict" color="1" fill="10" visible="yes" active="yes"/>
 <layer number="43" name="vRestrict" color="2" fill="10" visible="no" active="yes"/>
 <layer number="44" name="Drills" color="7" fill="1" visible="no" active="yes"/>
-<layer number="45" name="Holes" color="7" fill="1" visible="no" active="yes"/>
+<layer number="45" name="Holes" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="46" name="Milling" color="3" fill="1" visible="no" active="yes"/>
 <layer number="47" name="Measures" color="7" fill="1" visible="no" active="yes"/>
 <layer number="48" name="Document" color="7" fill="1" visible="no" active="yes"/>
@@ -167,10 +167,10 @@
 <wire x1="160" y1="0" x2="160" y2="100" width="0" layer="20"/>
 <wire x1="160" y1="100" x2="0" y2="100" width="0" layer="20"/>
 <wire x1="0" y1="100" x2="0" y2="0" width="0" layer="20"/>
-<text x="132" y="42" size="1.27" layer="25">0x58+0x42=0b........?</text>
-<text x="101.6" y="87.3125" size="1.778" layer="25">Technische 
-Fakultät,
-est. .... ?</text>
+<text x="127.555" y="53.7475" size="1.778" layer="25">0x58+0x42=0b........?</text>
+<text x="101.6" y="87.3125" size="1.778" layer="25">The Technical 
+Faculty was 
+founded in ... ?</text>
 <text x="10.795" y="85.4075" size="0.6096" layer="25">GND</text>
 <text x="10.795" y="60.0075" size="0.6096" layer="25">GND</text>
 <text x="10.795" y="34.6075" size="0.6096" layer="25">GND</text>
@@ -189,6 +189,10 @@ MOSI</text>
 <text x="10.795" y="29.5275" size="0.6096" layer="25">+12V</text>
 <text x="10.795" y="19.3675" size="0.6096" layer="25">+12V</text>
 <text x="10.795" y="24.4475" size="0.6096" layer="25">Drain</text>
+<hole x="6" y="6" drill="3.5"/>
+<hole x="6" y="94" drill="3.5"/>
+<hole x="154" y="94" drill="3.5"/>
+<hole x="154" y="6" drill="3.5"/>
 </plain>
 <libraries>
 <library name="ESP32-DEVKITC-32D" urn="urn:adsk.eagle:library:15324894">
