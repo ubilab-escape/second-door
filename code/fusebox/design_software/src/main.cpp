@@ -41,31 +41,24 @@ tPuzzleState puzzleStatePotis;
 MAX7221 seg1 = MAX7221(MAX7221_CS, 1, MAX7221::SEGMENT);
 MAX7221 ledm1 = MAX7221(MAX7219_CS, 4, MAX7221::LEDMATRIX);
 
+TaskHandle_t xHandleLedRing;
 
+#define SEQUENDE_SIZE 5
+#define MAX_SEQUENZES 32
 
+// RGB Ring
+#define RGB_RING_PIN 27
+#define NUM_PIXEL 16
 
-#define SEQUENDE_SIZE       5
+// Laser dedector
+#define detectorPin 26
 
-//RGB Ring
-#define RGB_RING_PIN       27
-#define NUM_PIXEL          16
-
-//Laser dedector
-#define detectorPin 19
-uint detectorPin = 19;
-
-Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUM_PIXEL, RGB_RING_PIN, NEO_GRB + NEO_KHZ800);
-
+Adafruit_NeoPixel pixels =
+    Adafruit_NeoPixel(NUM_PIXEL, RGB_RING_PIN, NEO_GRB + NEO_KHZ800);
 uint8_t sequence[6];
-
 uint8_t numberOfSequences = 0;
-
 int old_time_in_ms = millis();
-
 bool puzzle_solved = false;
-
-
-
 
 // Task Attachment
 void TaskPotentiometerReadout(void *pvParameters);
@@ -73,7 +66,10 @@ void TaskWiringReadout(void *pvParameters);
 void TaskPiezoButtonReadout(void *pvParameters);
 void TaskControlPuzzleState(void *pvParameters);
 void TaskRefreshLedMatrix(void *pvParameters);
-void TaskRgbSensorReadout(void *pvParameters);
+void TaskLaserLock(void *pvParameters);
+
+void blink_ring(uint8_t blinking_number, uint8_t frequency);
+uint8_t analyse_sequence(uint8_t sequence[6], uint8_t target);
 
 void setup() {
 
@@ -82,6 +78,9 @@ void setup() {
 
   puzzleStateRewiring0 = INIT;
   puzzleStatePotis = INIT;
+
+  // disableCore0WDT();
+  // disableCore1WDT();
 
   Serial.begin(115200);
   Serial.println("Setup started ...");
@@ -103,38 +102,25 @@ void setup() {
   ledm1.commit();
 
   // Init LED ring
-  neopixel.begin();
-  neopixel.setBrightness(50);
-  neopixel.show();
+  // set led ring to red
+  pixels.begin();
+  pixels.setBrightness(255); // die Helligkeit setzen 0 dunke -> 255 ganz hell
+  pixels.show();             // Alle NeoPixel sind im Status "aus".
 
-  for (uint8_t i = 0; i < NUM_PIXEL; i++) {
-    neopixel.setPixelColor(i, neopixel.Color(255, 0, 0));
-    neopixel.show();
+  for (int i = 0; i < NUM_PIXEL; i++) {
+    // pixels.Color takes RGB values, from 0,0,0 up to 255,255,255
+    pixels.setPixelColor(
+        i, pixels.Color(255, 0, 0)); // Moderately bright green color.
+    pixels.show(); // This sends the updated pixel color to the hardware.
   }
 
-  // Init TCS Sensor
-  if (rgb_sensor.begin()) {
-    Serial.println("Found sensor");
-  } else {
-    Serial.println("No TCS34725 found ... check your connections");
-    // TODO: check connection
-  }
-
+  pinMode(detectorPin, INPUT); // Laser Detector als Eingangssignal setzen
   Serial.println("Setup finished");
 
   // Attach Tasks
-  xTaskCreatePinnedToCore(TaskControlPuzzleState, "TaskControlPuzzleState",
-                          2048, NULL, 1, NULL, 0);
-  xTaskCreatePinnedToCore(TaskPotentiometerReadout, "TaskPotentiometerReadout",
-                          2048, NULL, 2, NULL, 1);
-  xTaskCreatePinnedToCore(TaskWiringReadout, "TaskWiringReadout", 2048, NULL, 3,
-                          NULL, 0);
-  xTaskCreatePinnedToCore(TaskPiezoButtonReadout, "TaskPiezoButtonReadout",
-                          2048, NULL, 4, NULL, 1);
-  xTaskCreatePinnedToCore(TaskRefreshLedMatrix, "TaskRefreshLedMatrix", 2048,
-                          NULL, 5, NULL, 0);
-  xTaskCreatePinnedToCore(TaskRgbSensorReadout, "TaskRgbSensorReadout", 2048,
-                          NULL, 2, NULL, 1);
+  xTaskCreatePinnedToCore(TaskControlPuzzleState, "TaskControlPuzzleState", 2048, NULL, 1, NULL, 0);
+
+  xTaskCreatePinnedToCore(TaskLaserLock, "TaskLaserLock", 2048, NULL, 2, &xHandleLedRing,1);
 }
 
 void loop() {
@@ -165,8 +151,8 @@ void TaskPotentiometerReadout(void *pvParameters) {
     seg1.transferData(0x03, pValues[2]);
     seg1.transferData(0x04, pValues[3]);
 
-    if (pValues[0] == 1 && pValues[1] == 2 && pValues[2] == 3 &&
-        pValues[3] == 4) {
+    if (pValues[0] == 1 && pValues[1] == 9 && pValues[2] == 9 &&
+        pValues[3] == 5) {
       Serial.println("Potis Solved!");
       puzzleStatePotis = SOLVED;
     } else {
@@ -175,6 +161,78 @@ void TaskPotentiometerReadout(void *pvParameters) {
     }
 
     vTaskDelay(500);
+  }
+}
+
+void TaskLaserLock(void *pvParameters) {
+  (void)pvParameters;
+
+  for (;;) {
+    static uint8_t byte_count = 0;
+
+    sequence[byte_count] = digitalRead(detectorPin);
+
+    if (byte_count == SEQUENDE_SIZE) {
+      byte_count = 0;
+      uint8_t zeros = analyse_sequence(sequence, 0);
+      uint8_t ones = analyse_sequence(sequence, 1);
+
+      // chekc if sequenz is correct
+      if (zeros == ones && !puzzle_solved) {
+        Serial.print("Sequence dedected ");
+        Serial.print(zeros);
+        Serial.print(" ");
+        Serial.println(ones);
+        numberOfSequences++;
+        old_time_in_ms = millis();
+        // old_time_in_ms = xTaskGetTickCount();
+      }
+    }
+
+    // check if new additional LED shoulb set to green
+    if ((numberOfSequences % 2 == 0) && (numberOfSequences > 0)) {
+      uint8_t RGB_led = (uint8_t)numberOfSequences / 2;
+      pixels.setPixelColor(
+          RGB_led, pixels.Color(0, 255, 0)); // Moderately bright green color.
+      pixels.show(); // This sends the updated pixel color to the hardware.
+    }
+
+    // check if puzzle is solved
+    if (numberOfSequences > MAX_SEQUENZES) {
+      puzzle_solved = true;
+      Serial.println("Fuse Box open");
+      numberOfSequences = 0;
+      blink_ring(5, 2);
+
+      // Attach Tasks
+      xTaskCreatePinnedToCore(TaskPotentiometerReadout, "TaskPotentiometerReadout", 2048, NULL, 2, NULL, 1);
+      xTaskCreatePinnedToCore(TaskWiringReadout, "TaskWiringReadout", 2048, NULL, 3, NULL, 0);
+      xTaskCreatePinnedToCore(TaskPiezoButtonReadout, "TaskPiezoButtonReadout", 2048, NULL, 2, NULL, 1);
+      xTaskCreatePinnedToCore(TaskRefreshLedMatrix, "TaskRefreshLedMatrix", 2048, NULL, 3, NULL, 0);
+
+      vTaskDelete(xHandleLedRing);
+
+      
+    }
+
+    // int time_in_ms = xTaskGetTickCount() - old_time_in_ms;
+    int time_in_ms = millis() - old_time_in_ms;
+
+    if (time_in_ms >= 500) {
+      if (numberOfSequences > 0) {
+        if (numberOfSequences % 2 == 0) {
+          uint8_t RGB_led = (uint8_t)numberOfSequences / 2;
+          pixels.setPixelColor(RGB_led,
+                               pixels.Color(255, 0, 0)); // set led to red
+          pixels.show(); // This sends the updated pixel color to the hardware.
+        }
+        numberOfSequences--; // count down sequence if max time was reached
+      }
+      old_time_in_ms = millis();
+      // old_time_in_ms = xTaskGetTickCount();
+    }
+    byte_count++;
+    vTaskDelay(10);
   }
 }
 
@@ -189,14 +247,14 @@ void TaskWiringReadout(void *pvParameters) {
     for (int i = 0; i <= 4; i++) {
       rewiringValues0[i] = analogRead(rewiringPins0[i]);
       rewiringValues0[i] = map(rewiringValues0[i], 0, 4095, 0, 33);
-      // Serial.print("Rewiring 0_");
-      // Serial.print(i);
-      // Serial.print(": ");
-      // Serial.println(rewiringValues0[i]);
+      Serial.print("Rewiring 0_");
+      Serial.print(i);
+      Serial.print(": ");
+      Serial.println(rewiringValues0[i]);
     }
 
-    if ((rewiringValues0[0] >= 3 && rewiringValues0[0] <= 7) &&
-        (rewiringValues0[1] >= 9 && rewiringValues0[1] <= 13) &&
+    if ((rewiringValues0[0] >= 3 && rewiringValues0[0] <= 9) &&
+        (rewiringValues0[1] >= 9 && rewiringValues0[1] <= 16) &&
         (rewiringValues0[2] >= 16 && rewiringValues0[2] <= 20) &&
         (rewiringValues0[3] >= 23 && rewiringValues0[3] <= 27) &&
         (rewiringValues0[4] >= 31 && rewiringValues0[4] <= 35)) {
@@ -231,18 +289,16 @@ void blink_ring(uint8_t blinking_number, uint8_t frequency) {
   }
 }
 
-uint8_t  analyse_sequence(uint8_t sequence[6], uint8_t target){
+uint8_t analyse_sequence(uint8_t sequence[6], uint8_t target) {
   uint8_t target_number = 0;
   uint8_t len = sizeof(sequence);
-  for (int i=0; i<len; i++){
-    if (sequence[i] == target){
+  for (int i = 0; i < len; i++) {
+    if (sequence[i] == target) {
       target_number++;
     }
   }
   return target_number + 1;
 }
-
-
 
 void TaskControlPuzzleState(void *pvParameters) {
   (void)pvParameters;
