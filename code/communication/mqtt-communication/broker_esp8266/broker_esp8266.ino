@@ -12,8 +12,8 @@ uMQTTBroker myBroker;
 /*
  * Your WiFi config here
  */
-char ssid[] = "iotbyhvm";      // Replace with your network SSID (name)
-char pass[] = "asdf7890"; // Replace with your network password
+const char* ssid     = "Thomass iPhone";
+const char* pass = "12345670";
 
 /*
  * WiFi init stuff
