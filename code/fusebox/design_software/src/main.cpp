@@ -306,12 +306,15 @@ void TaskControlPuzzleState(void *pvParameters) {
     Serial.print("TaskControlPuzzleState: ");
     if (puzzleStatePotis == SOLVED && puzzleStateRewiring0 == SOLVED) {
       Serial.println("All Puzzles Solved");
+      digitalWrite(LOCK_0, HIGH);     //TODO: RMove
       ledm1.setColumn(0, 0b11100000);
       ledm1.setColumn(1, 0b10100000);
       ledm1.setColumn(2, 0b11100000);
       ledm1.commit();
+      
     } else {
       Serial.println("Not all Puzzles Solved!");
+      digitalWrite(LOCK_0, LOW);      // TODO: Rmove
       ledm1.setColumn(0, 0b10100000);
       ledm1.setColumn(1, 0b01000000);
       ledm1.setColumn(2, 0b10100000);
