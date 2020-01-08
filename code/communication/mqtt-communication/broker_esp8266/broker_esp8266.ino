@@ -6,8 +6,14 @@
 
 #include <ESP8266WiFi.h>
 #include "uMQTTBroker.h"
+#include <ArduinoJson.h>
 
 uMQTTBroker myBroker;
+
+//Json
+StaticJsonDocument<300> doc;
+JsonObject JSONencoder = doc.to<JsonObject>();
+
 
 /*
  * Your WiFi config here
@@ -55,10 +61,20 @@ void setup()
   // Start the broker
   Serial.println("Starting MQTT broker");
   myBroker.init();
+
+  JSONencoder["method"] = "TRIGGER";
+  JSONencoder["state"] = "on";
+  JSONencoder["data"] = "2";
 }
 
 void loop()
 {   
   // do anything here
-  delay(1000);
+  char JSONmessageBuffer[100];
+  //JSONencoder.printTo(JSONmessageBuffer, sizeof(JSONmessageBuffer));
+  serializeJson(doc,JSONmessageBuffer, 100);
+  Serial.print("send message");
+  Serial.println(JSONencoder);
+  myBroker.publish("7/fusebox", JSONmessageBuffer);
+  delay(5000);
 }
