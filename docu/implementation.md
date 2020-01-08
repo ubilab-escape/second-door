@@ -28,6 +28,8 @@ The laser is used to melt the lock. [LED ring](https://www.adafruit.com/product/
 <img src="implementation/fusebox/led_ring.jpg" width=400>
 </p>
 <p align="center">Figure X: LEDs for indicating status of melting lock process<p align="center">
+  
+When the laser beam hits the sensor, the LEDs change from red to green one after the other. If nothing is detected by the sensor, the LEDs turn red again to simulate cooling.
 
 # Laser + Box
 
