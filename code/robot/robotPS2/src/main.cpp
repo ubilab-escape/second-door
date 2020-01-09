@@ -24,7 +24,7 @@
 // NeoPixel
 #define PIXEL_PIN 7
 
-#define NUMPIXELS 16
+#define NUMPIXELS 34
 
 //#define pressures   true
 #define pressures false
@@ -36,8 +36,6 @@ void TaskBlink(void *pvParameters);
 void TaskCheckESP(void *pvParameters);
 
 Robot robot;
-
-bool robot_on = false;
 
 Adafruit_NeoPixel pixels(NUMPIXELS, PIXEL_PIN, NEO_GRB + NEO_KHZ800);
 
@@ -82,7 +80,6 @@ void setup() {
 
   robot.init(PS2_CLK, PS2_CMD, PS2_SEL, PS2_DAT, pressures, rumble, LEFT_FORWARD, LEFT_BACKWARD,
              RIGHT_FORWARD, RIGHT_BACKWARD);
-
 
   xTaskCreate(TaskControllRobot, (const portCHAR *)"ControllRobot",
               128  // This stack size can be checked & adjusted by reading Highwater
@@ -178,9 +175,24 @@ void TaskControllRobot(void *pvParameters) {
 void TaskBlink(void *pvParameters) {
   (void)pvParameters;
 
+  Color color = red;
+
   for (;;) {
+    Serial.println(color);
+    color = robot.get_color();
     for (int i = 0; i < NUMPIXELS; i++) {
-      pixels.setPixelColor(i, pixels.Color(0, 255, 0));
+      if (color == red) {
+        pixels.setPixelColor(i, pixels.Color(0, 255, 0));
+      }
+      if (color == blue) {
+        pixels.setPixelColor(i, pixels.Color(0, 0, 255));
+      }
+      if (color == green) {
+        pixels.setPixelColor(i, pixels.Color(255, 0, 0));
+      }
+      if (color == magenta) {
+        pixels.setPixelColor(i, pixels.Color(255, 0, 255));
+      }
 
       pixels.show();
     }
@@ -195,9 +207,9 @@ void TaskCheckESP(void *pvParameters) {
     if (Serial.available()) {
       unsigned char income = Serial.read();
       if (income) {
-        robot_on = true;
+        robot.robotOn = true;
       } else {
-        robot_on = false;
+        robot.robotOn = false;
       }
     }
     vTaskDelay(5);  // one tick delay (15ms) in between reads for stability

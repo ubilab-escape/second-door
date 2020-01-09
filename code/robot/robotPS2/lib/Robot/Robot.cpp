@@ -6,11 +6,13 @@ void Robot::init(uint8_t clk, uint8_t cmd, uint8_t att, uint8_t dat, bool pressu
   delay(300);
   error = ps2x.config_gamepad(clk, cmd, att, dat, pressures, rumble);
   delay(300);
-  
+
   leftForward = lf;
   leftBackward = lb;
   rightForward = rf;
   rigthBackward = rb;
+
+  robotOn = false;
 
   pinMode(leftForward, OUTPUT);
   pinMode(leftBackward, OUTPUT);
@@ -36,6 +38,19 @@ void Robot::controll() {
   }
   if (controll_button_pressed() == false) {
     stop_motors();
+  }
+  // for colors
+  if (ps2x.Button(PSB_CIRCLE)) {
+    color = red;
+  }
+  if (ps2x.Button(PSB_TRIANGLE)) {
+    color = green;
+  }
+  if (ps2x.Button(PSB_SQUARE)) {
+    color = magenta;
+  }
+  if (ps2x.Button(PSB_CROSS)) {
+    color = blue;
   }
 }
 
@@ -84,3 +99,5 @@ bool Robot::controll_button_pressed() {
   }
   return false;
 }
+
+Color Robot::get_color() { return color; }
