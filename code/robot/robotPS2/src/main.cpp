@@ -6,8 +6,8 @@
  *  reconfig of controller is done in read_gamepad()
  ******************************************************************/
 
-#include <PS2X_lib.h>
 #include <Arduino_FreeRTOS.h>
+#include <PS2X_lib.h>
 
 #define PS2_DAT 12
 #define PS2_CMD 11
@@ -15,9 +15,8 @@
 #define PS2_CLK 13
 
 // motor pins
-#define LEFT_FORWARD 3   // A2
-#define LEFT_BACKWARD 5  // A1
-
+#define LEFT_FORWARD 3    // A2
+#define LEFT_BACKWARD 5   // A1
 #define RIGHT_FORWARD 6   // B1
 #define RIGHT_BACKWARD 9  // B2
 
@@ -25,6 +24,10 @@
 #define pressures false
 //#define rumble      true
 #define rumble false
+
+void TaskControllRobot(void *pvParameters);
+void TaskBlink(void *pvParameters);
+// void TaskCheckESP(void *pvParameters);
 
 PS2X ps2x;
 
@@ -34,6 +37,9 @@ byte vibrate = 0;
 
 byte ps2_translation, ps2_rotation;
 
+/////////////////////////////////////
+// DO NOT USE millis with RTOS
+/////////////////////////////////////
 class Timer {
  public:
   void init() {
@@ -128,16 +134,29 @@ void setup() {
   // small delay to give controller pairing
   delay(2000);
   stop_motors();
-  time.init();
+  //time.init();
 
-  // init_PS2();
+  xTaskCreate(TaskControllRobot, (const portCHAR *)"ControllRobot",
+              128  // This stack size can be checked & adjusted by reading Highwater
+              ,
+              NULL, 1  // priority
+              ,
+              NULL);
+
+  xTaskCreate(TaskBlink, (const portCHAR *)"Blink"  // A name just for humans
+              ,
+              128  // Stack size
+              ,
+              NULL, 2  // priority
+              ,
+              NULL);
 }
 
 void loop() {
-  ps2x.read_gamepad(false, vibrate);
+  // ps2x.read_gamepad(false, vibrate);
 
   // timing for reseting motor pins in case of keeping different button pressed
-  time.set_time();
+  // time.set_time();
 
   /*
   while (error == 1) {
@@ -176,29 +195,51 @@ void loop() {
   }
   */
 
-  if (ps2x.Button(PSB_PAD_UP)) {
-    drive_forward();
-  }
-  if (ps2x.Button(PSB_PAD_DOWN)) {
-    drive_backward();
-  }
-  if (ps2x.Button(PSB_PAD_RIGHT)) {
-    turn_right();
-  }
-  if (ps2x.Button(PSB_PAD_LEFT)) {
-    turn_left();
-  }
+  /*
+    if (controll_button_pressed() == false || time.get_diff() > 500) {
+      Serial.println("STOP");
+      stop_motors();
+      time.remember_me();
+    }
 
-  if (controll_button_pressed() == false || time.get_diff() > 500) {
-    Serial.println("STOP");
-    stop_motors();
-    time.remember_me();
+    Serial.print(ps2_translation);  // Left stick, Y axis. Other options: LX, RY, RX
+    Serial.print(",");
+    Serial.print(ps2_rotation);
+    Serial.println(" ");
+    delay(10);
+    */
+}
+
+void TaskControllRobot(void *pvParameters) {
+  (void)pvParameters;
+
+  for (;;) {
+    ps2x.read_gamepad(false, vibrate);
+    if (ps2x.Button(PSB_PAD_UP)) {
+      Serial.println("FORWARD");
+      drive_forward();
+    }
+    if (ps2x.Button(PSB_PAD_DOWN)) {
+      Serial.println("BACKWARD");
+      drive_backward();
+    }
+    if (ps2x.Button(PSB_PAD_RIGHT)) {
+      turn_right();
+    }
+    if (ps2x.Button(PSB_PAD_LEFT)) {
+      turn_left();
+    }
+    if (controll_button_pressed() == false){
+      stop_motors();
+    }
+    vTaskDelay(1);  // one tick delay (15ms) in between reads for stability
   }
+}
 
+void TaskBlink(void *pvParameters) {
+  (void)pvParameters;
 
-  Serial.print(ps2_translation);  // Left stick, Y axis. Other options: LX, RY, RX
-  Serial.print(",");
-  Serial.print(ps2_rotation);
-  Serial.println(" ");
-  delay(10);
+  for (;;) {
+    vTaskDelay(5);  // one tick delay (15ms) in between reads for stability
+  }
 }
