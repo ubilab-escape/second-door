@@ -8,7 +8,7 @@
 
 #include <Adafruit_NeoPixel.h>
 #include <Arduino_FreeRTOS.h>
-#include <PS2X_lib.h>
+#include <Robot.h>
 
 #define PS2_DAT 12
 #define PS2_CMD 11
@@ -33,15 +33,11 @@
 
 void TaskControllRobot(void *pvParameters);
 void TaskBlink(void *pvParameters);
-// void TaskCheckESP(void *pvParameters);
+void TaskCheckESP(void *pvParameters);
 
-PS2X ps2x;
+Robot robot;
 
-int error = 0;
-byte type = 0;
-byte vibrate = 0;
-
-byte ps2_translation, ps2_rotation;
+bool robot_on = false;
 
 Adafruit_NeoPixel pixels(NUMPIXELS, PIXEL_PIN, NEO_GRB + NEO_KHZ800);
 
@@ -71,61 +67,11 @@ class Timer {
 
 Timer time;
 
-void stop_motors() {
-  analogWrite(LEFT_FORWARD, 0);
-  analogWrite(RIGHT_FORWARD, 0);
-  analogWrite(LEFT_BACKWARD, 0);
-  analogWrite(RIGHT_BACKWARD, 0);
-}
-
 void drive_forward(byte val) {
   val = 255 - val;
   // val = map(val, 0, 1023, 0, 255);
   analogWrite(LEFT_FORWARD, val);
   analogWrite(RIGHT_FORWARD, val);
-}
-
-void drive_forward() {
-  analogWrite(LEFT_FORWARD, 64);
-  analogWrite(RIGHT_FORWARD, 64);
-}
-
-void drive_backward(byte val) {
-  analogWrite(LEFT_BACKWARD, val);
-  analogWrite(RIGHT_BACKWARD, val);
-}
-
-void drive_backward() {
-  analogWrite(LEFT_BACKWARD, 64);
-  analogWrite(RIGHT_BACKWARD, 64);
-}
-
-void turn_right() {
-  analogWrite(LEFT_FORWARD, 64);
-  analogWrite(RIGHT_BACKWARD, 64);
-}
-void turn_left() {
-  analogWrite(LEFT_BACKWARD, 64);
-  analogWrite(RIGHT_FORWARD, 64);
-}
-
-bool controll_button_pressed() {
-  if (ps2x.Button(PSB_PAD_UP)) {
-    return true;
-  }
-  if (ps2x.Button(PSB_PAD_DOWN)) {
-    return true;
-  }
-  if (ps2x.Button(PSB_PAD_RIGHT)) {
-    return true;
-  }
-  if (ps2x.Button(PSB_PAD_LEFT)) {
-    return true;
-  }
-  if (ps2x.Analog(PSS_LY) <= 126 && ps2x.Analog(PSS_LX) >= 130) {
-    return true;
-  }
-  return false;
 }
 
 void setup() {
@@ -134,18 +80,9 @@ void setup() {
   pixels.begin();
   pixels.clear();
 
-  delay(300);
-  error = ps2x.config_gamepad(PS2_CLK, PS2_CMD, PS2_SEL, PS2_DAT, pressures, rumble);
+  robot.init(PS2_CLK, PS2_CMD, PS2_SEL, PS2_DAT, pressures, rumble, LEFT_FORWARD, LEFT_BACKWARD,
+             RIGHT_FORWARD, RIGHT_BACKWARD);
 
-  pinMode(LEFT_FORWARD, OUTPUT);
-  pinMode(LEFT_BACKWARD, OUTPUT);
-  pinMode(RIGHT_FORWARD, OUTPUT);
-  pinMode(RIGHT_BACKWARD, OUTPUT);
-
-  // small delay to give controller pairing
-  delay(2000);
-  stop_motors();
-  // time.init();
 
   xTaskCreate(TaskControllRobot, (const portCHAR *)"ControllRobot",
               128  // This stack size can be checked & adjusted by reading Highwater
@@ -155,6 +92,14 @@ void setup() {
               NULL);
 
   xTaskCreate(TaskBlink, (const portCHAR *)"Blink"  // A name just for humans
+              ,
+              128  // Stack size
+              ,
+              NULL, 2  // priority
+              ,
+              NULL);
+
+  xTaskCreate(TaskCheckESP, (const portCHAR *)"CheckESP"  // A name just for humans
               ,
               128  // Stack size
               ,
@@ -225,24 +170,7 @@ void TaskControllRobot(void *pvParameters) {
   (void)pvParameters;
 
   for (;;) {
-    ps2x.read_gamepad(false, vibrate);
-    if (ps2x.Button(PSB_PAD_UP)) {
-      Serial.println("FORWARD");
-      drive_forward();
-    }
-    if (ps2x.Button(PSB_PAD_DOWN)) {
-      Serial.println("BACKWARD");
-      drive_backward();
-    }
-    if (ps2x.Button(PSB_PAD_RIGHT)) {
-      turn_right();
-    }
-    if (ps2x.Button(PSB_PAD_LEFT)) {
-      turn_left();
-    }
-    if (controll_button_pressed() == false) {
-      stop_motors();
-    }
+    robot.controll();
     vTaskDelay(1);  // one tick delay (15ms) in between reads for stability
   }
 }
@@ -255,6 +183,22 @@ void TaskBlink(void *pvParameters) {
       pixels.setPixelColor(i, pixels.Color(0, 255, 0));
 
       pixels.show();
+    }
+    vTaskDelay(5);  // one tick delay (15ms) in between reads for stability
+  }
+}
+
+void TaskCheckESP(void *pvParameters) {
+  (void)pvParameters;
+
+  for (;;) {
+    if (Serial.available()) {
+      unsigned char income = Serial.read();
+      if (income) {
+        robot_on = true;
+      } else {
+        robot_on = false;
+      }
     }
     vTaskDelay(5);  // one tick delay (15ms) in between reads for stability
   }
