@@ -9,7 +9,7 @@
 #include <MD_MAXPanel.h>
 #include "Fonts.h"
 
-#define DEBUG
+// #define DEBUG
 // #define DEBUG_SERIAL
 
 #if CONFIG_FREERTOS_UNICORE
@@ -50,7 +50,7 @@ tPuzzleState puzzleStatePotis;
 MAX7221 seg1 = MAX7221(MAX7221_CS, 1, MAX7221::SEGMENT);
 // MAX7221 ledm1 = MAX7221(MAX7219_CS, 8, MAX7221::LEDMATRIX);
 
-MD_MAXPanel ledm1 = MD_MAXPanel(MD_MAX72XX::FC16_HW, MAX7219_CS, 4, 2);
+MD_MAXPanel ledm1 = MD_MAXPanel(MD_MAX72XX::FC16_HW, MAX7219_CS, 3, 2);
 
 TaskHandle_t xHandleLedRing;
 TaskHandle_t xHandleControlPuzzleState;
@@ -323,8 +323,6 @@ void blink_ring(uint8_t blinking_number, uint8_t frequency) {
 uint8_t analyse_sequence(uint8_t sequence[6], uint8_t target) {
   uint8_t target_number = 0;
   uint8_t len = sizeof(sequence);
-  Serial.print("Size of: ");
-  Serial.println(len);
   for (int i = 0; i < len; i++) {
     if (sequence[i] == target) {
       target_number++;
@@ -345,13 +343,13 @@ void TaskControlPuzzleState(void *pvParameters) {
       Serial.println("All Puzzles Solved");
 #endif
       ledm1.clear();
-      ledm1.drawText(3, 14, "SOLVED!");
+      ledm1.drawText(1, 14, "Solved!");
 
     } else {
       Serial.println("Not all Puzzles Solved!");
       ledm1.clear();
-      ledm1.drawText(3, 14, "Not");
-      ledm1.drawText(8, 6, "Solved!");
+      ledm1.drawText(1, 14, "Not");
+      ledm1.drawText(1, 6, "Solved!");
 
       // ledm1.commit();
     }
@@ -371,12 +369,14 @@ void TaskPiezoButtonReadout(void *pvParameters) {
       vTaskSuspend(xHandleControlPuzzleState);
       Serial.println("Button 1 pressed");
       ledm1.clear();
+      ledm1.setCharSpacing(0);
 
-      ledm1.drawHLine(15, 1, 31);
-      ledm1.drawText(1, 13, "STRANGER", MD_MAXPanel::ROT_0);
-      ledm1.drawText(5, 7, "THINGS", MD_MAXPanel::ROT_0);
-      ledm1.drawHLine(6, 1, 3);
-      ledm1.drawHLine(6, 29, 31);
+      ledm1.drawHLine(13, 0, 23);
+      ledm1.drawText(0, 11, "STRANGER", MD_MAXPanel::ROT_0);
+      ledm1.drawText(3, 5, "THINGS", MD_MAXPanel::ROT_0);
+      ledm1.drawHLine(4, 0, 2);
+      ledm1.drawHLine(4, 21, 23);
+      ledm1.setCharSpacing(1);
 
       float frequencies[] = {130.81, 164.81, 196.0, 246.94,
                              261.63, 246.94, 196.0, 164.81};
