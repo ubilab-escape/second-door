@@ -6,6 +6,7 @@
  *  reconfig of controller is done in read_gamepad()
  ******************************************************************/
 
+#include <Adafruit_NeoPixel.h>
 #include <Arduino_FreeRTOS.h>
 #include <PS2X_lib.h>
 
@@ -19,6 +20,11 @@
 #define LEFT_BACKWARD 5   // A1
 #define RIGHT_FORWARD 6   // B1
 #define RIGHT_BACKWARD 9  // B2
+
+// NeoPixel
+#define PIXEL_PIN 7
+
+#define NUMPIXELS 16
 
 //#define pressures   true
 #define pressures false
@@ -36,6 +42,8 @@ byte type = 0;
 byte vibrate = 0;
 
 byte ps2_translation, ps2_rotation;
+
+Adafruit_NeoPixel pixels(NUMPIXELS, PIXEL_PIN, NEO_GRB + NEO_KHZ800);
 
 /////////////////////////////////////
 // DO NOT USE millis with RTOS
@@ -123,6 +131,9 @@ bool controll_button_pressed() {
 void setup() {
   Serial.begin(115200);
 
+  pixels.begin();
+  pixels.clear();
+
   delay(300);
   error = ps2x.config_gamepad(PS2_CLK, PS2_CMD, PS2_SEL, PS2_DAT, pressures, rumble);
 
@@ -134,7 +145,7 @@ void setup() {
   // small delay to give controller pairing
   delay(2000);
   stop_motors();
-  //time.init();
+  // time.init();
 
   xTaskCreate(TaskControllRobot, (const portCHAR *)"ControllRobot",
               128  // This stack size can be checked & adjusted by reading Highwater
@@ -229,7 +240,7 @@ void TaskControllRobot(void *pvParameters) {
     if (ps2x.Button(PSB_PAD_LEFT)) {
       turn_left();
     }
-    if (controll_button_pressed() == false){
+    if (controll_button_pressed() == false) {
       stop_motors();
     }
     vTaskDelay(1);  // one tick delay (15ms) in between reads for stability
@@ -240,6 +251,11 @@ void TaskBlink(void *pvParameters) {
   (void)pvParameters;
 
   for (;;) {
+    for (int i = 0; i < NUMPIXELS; i++) {
+      pixels.setPixelColor(i, pixels.Color(0, 255, 0));
+
+      pixels.show();
+    }
     vTaskDelay(5);  // one tick delay (15ms) in between reads for stability
   }
 }
