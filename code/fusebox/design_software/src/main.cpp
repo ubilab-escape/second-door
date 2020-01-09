@@ -1,7 +1,16 @@
 #include "MAX7221.h"
 #include <Adafruit_NeoPixel.h>
 #include <Adafruit_TCS34725.h>
+
 #include <Arduino.h>
+
+
+#include <MD_MAX72xx.h>
+#include <MD_MAXPanel.h>
+#include "Fonts.h"
+
+#define DEBUG
+// #define DEBUG_SERIAL
 
 #if CONFIG_FREERTOS_UNICORE
 #define ARDUINO_RUNNING_CORE 0
@@ -39,9 +48,12 @@ tPuzzleState puzzleStateRewiring0;
 tPuzzleState puzzleStatePotis;
 
 MAX7221 seg1 = MAX7221(MAX7221_CS, 1, MAX7221::SEGMENT);
-MAX7221 ledm1 = MAX7221(MAX7219_CS, 4, MAX7221::LEDMATRIX);
+// MAX7221 ledm1 = MAX7221(MAX7219_CS, 8, MAX7221::LEDMATRIX);
+
+MD_MAXPanel ledm1 = MD_MAXPanel(MD_MAX72XX::FC16_HW, MAX7219_CS, 4, 2);
 
 TaskHandle_t xHandleLedRing;
+TaskHandle_t xHandleControlPuzzleState;
 
 #define SEQUENDE_SIZE 5
 #define MAX_SEQUENZES 32
@@ -65,7 +77,7 @@ void TaskPotentiometerReadout(void *pvParameters);
 void TaskWiringReadout(void *pvParameters);
 void TaskPiezoButtonReadout(void *pvParameters);
 void TaskControlPuzzleState(void *pvParameters);
-void TaskRefreshLedMatrix(void *pvParameters);
+
 void TaskLaserLock(void *pvParameters);
 
 void blink_ring(uint8_t blinking_number, uint8_t frequency);
@@ -97,9 +109,12 @@ void setup() {
   // Init MAX7221 on SPI Bus
   seg1.initMAX();
 
-  ledm1.initMAX();
-  ledm1.clear();
-  ledm1.commit();
+  ledm1.begin();
+  ledm1.setFont(_Fixed_5x3);
+
+  // ledm1.initMAX();
+  // ledm1.clear();
+  // ledm1.commit();
 
   // Init LED ring
   // set led ring to red
@@ -118,9 +133,21 @@ void setup() {
   Serial.println("Setup finished");
 
   // Attach Tasks
-  xTaskCreatePinnedToCore(TaskControlPuzzleState, "TaskControlPuzzleState", 2048, NULL, 1, NULL, 0);
+  xTaskCreatePinnedToCore(TaskControlPuzzleState, "TaskControlPuzzleState",
+                          2048, NULL, 1, &xHandleControlPuzzleState, 0);
 
-  xTaskCreatePinnedToCore(TaskLaserLock, "TaskLaserLock", 2048, NULL, 2, &xHandleLedRing,1);
+#ifndef DEBUG
+  xTaskCreatePinnedToCore(TaskLaserLock, "TaskLaserLock", 2048, NULL, 2,
+                          &xHandleLedRing, 1);
+#else
+  xTaskCreatePinnedToCore(TaskPotentiometerReadout, "TaskPotentiometerReadout",
+                          2048, NULL, 2, NULL, 1);
+  xTaskCreatePinnedToCore(TaskWiringReadout, "TaskWiringReadout", 2048, NULL, 3,
+                          NULL, 0);
+  xTaskCreatePinnedToCore(TaskPiezoButtonReadout, "TaskPiezoButtonReadout",
+                          2048, NULL, 2, NULL, 1);
+
+#endif
 }
 
 void loop() {
@@ -140,11 +167,12 @@ void TaskPotentiometerReadout(void *pvParameters) {
       value = analogRead(potis[i]);
       value = map(value, 0, 4095, 0, 9);
       pValues[i] = value;
-
-      // Serial.print("Poti ");
-      // Serial.print(i);
-      // Serial.print(": ");
-      // Serial.println(pValues[i]);
+#ifdef DEBUG_SERIAL
+      Serial.print("Poti ");
+      Serial.print(i);
+      Serial.print(": ");
+      Serial.println(pValues[i]);
+#endif
     }
     seg1.transferData(0x01, pValues[0]);
     seg1.transferData(0x02, pValues[1]);
@@ -205,14 +233,15 @@ void TaskLaserLock(void *pvParameters) {
       blink_ring(5, 2);
 
       // Attach Tasks
-      xTaskCreatePinnedToCore(TaskPotentiometerReadout, "TaskPotentiometerReadout", 2048, NULL, 2, NULL, 1);
-      xTaskCreatePinnedToCore(TaskWiringReadout, "TaskWiringReadout", 2048, NULL, 3, NULL, 0);
-      xTaskCreatePinnedToCore(TaskPiezoButtonReadout, "TaskPiezoButtonReadout", 2048, NULL, 2, NULL, 1);
-      xTaskCreatePinnedToCore(TaskRefreshLedMatrix, "TaskRefreshLedMatrix", 2048, NULL, 3, NULL, 0);
+      xTaskCreatePinnedToCore(TaskPotentiometerReadout,
+                              "TaskPotentiometerReadout", 2048, NULL, 2, NULL,
+                              1);
+      xTaskCreatePinnedToCore(TaskWiringReadout, "TaskWiringReadout", 2048,
+                              NULL, 3, NULL, 0);
+      xTaskCreatePinnedToCore(TaskPiezoButtonReadout, "TaskPiezoButtonReadout",
+                              2048, NULL, 2, NULL, 1);
 
       vTaskDelete(xHandleLedRing);
-
-      
     }
 
     // int time_in_ms = xTaskGetTickCount() - old_time_in_ms;
@@ -247,10 +276,12 @@ void TaskWiringReadout(void *pvParameters) {
     for (int i = 0; i <= 4; i++) {
       rewiringValues0[i] = analogRead(rewiringPins0[i]);
       rewiringValues0[i] = map(rewiringValues0[i], 0, 4095, 0, 33);
+#ifdef DEBUF_SERIAL
       Serial.print("Rewiring 0_");
       Serial.print(i);
       Serial.print(": ");
       Serial.println(rewiringValues0[i]);
+#endif
     }
 
     if ((rewiringValues0[0] >= 3 && rewiringValues0[0] <= 9) &&
@@ -292,6 +323,8 @@ void blink_ring(uint8_t blinking_number, uint8_t frequency) {
 uint8_t analyse_sequence(uint8_t sequence[6], uint8_t target) {
   uint8_t target_number = 0;
   uint8_t len = sizeof(sequence);
+  Serial.print("Size of: ");
+  Serial.println(len);
   for (int i = 0; i < len; i++) {
     if (sequence[i] == target) {
       target_number++;
@@ -303,36 +336,27 @@ uint8_t analyse_sequence(uint8_t sequence[6], uint8_t target) {
 void TaskControlPuzzleState(void *pvParameters) {
   (void)pvParameters;
   for (;;) {
+
+    // ledm1.displayAnimate();
+
     Serial.print("TaskControlPuzzleState: ");
     if (puzzleStatePotis == SOLVED && puzzleStateRewiring0 == SOLVED) {
+#ifdef DEBUG_SERIAL
       Serial.println("All Puzzles Solved");
-      digitalWrite(LOCK_0, HIGH);     //TODO: RMove
-      ledm1.setColumn(0, 0b11100000);
-      ledm1.setColumn(1, 0b10100000);
-      ledm1.setColumn(2, 0b11100000);
-      ledm1.commit();
-      
+#endif
+      ledm1.clear();
+      ledm1.drawText(3, 14, "SOLVED!");
+
     } else {
       Serial.println("Not all Puzzles Solved!");
-      digitalWrite(LOCK_0, LOW);      // TODO: Rmove
-      ledm1.setColumn(0, 0b10100000);
-      ledm1.setColumn(1, 0b01000000);
-      ledm1.setColumn(2, 0b10100000);
-      ledm1.commit();
+      ledm1.clear();
+      ledm1.drawText(3, 14, "Not");
+      ledm1.drawText(8, 6, "Solved!");
+
+      // ledm1.commit();
     }
 
     vTaskDelay(300);
-  }
-}
-
-void TaskRefreshLedMatrix(void *pvParameters) {
-  // define 10s delay
-  for (;;) {
-    Serial.print("TaskRefreshLedMatrix: ");
-    ledm1.clear();
-    ledm1.commit();
-    Serial.println("Display cleared!");
-    vTaskDelay(10000);
   }
 }
 
@@ -344,13 +368,26 @@ void TaskPiezoButtonReadout(void *pvParameters) {
     uint16_t buttonState1 = digitalRead(BUTTON_0);
     uint16_t buttonState2 = digitalRead(BUTTON_1);
     if (buttonState1) {
+      vTaskSuspend(xHandleControlPuzzleState);
       Serial.println("Button 1 pressed");
+      ledm1.clear();
+
+      ledm1.drawHLine(15, 1, 31);
+      ledm1.drawText(1, 13, "STRANGER", MD_MAXPanel::ROT_0);
+      ledm1.drawText(5, 7, "THINGS", MD_MAXPanel::ROT_0);
+      ledm1.drawHLine(6, 1, 3);
+      ledm1.drawHLine(6, 29, 31);
+
       float frequencies[] = {130.81, 164.81, 196.0, 246.94,
                              261.63, 246.94, 196.0, 164.81};
       for (int i = 0; i <= 7; i++) {
         ledcWriteTone(LEDC_CHANNEL1, frequencies[i]);
         vTaskDelay(250);
       }
+
+      ledm1.clear();
+      vTaskResume(xHandleControlPuzzleState);
+
     } else if (buttonState2) {
       Serial.println("Button 2 pressed");
       // e 164.81
