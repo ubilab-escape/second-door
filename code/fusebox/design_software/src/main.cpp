@@ -112,10 +112,6 @@ void setup() {
   ledm1.begin();
   ledm1.setFont(_Fixed_5x3);
 
-  // ledm1.initMAX();
-  // ledm1.clear();
-  // ledm1.commit();
-
   // Init LED ring
   // set led ring to red
   pixels.begin();
