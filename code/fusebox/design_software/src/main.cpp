@@ -8,7 +8,7 @@
 #include <pcf8574_esp.h>
 #include "Fonts.h"
 
-#define DEBUG
+// #define DEBUG
 
 #if CONFIG_FREERTOS_UNICORE
 #define ARDUINO_RUNNING_CORE 0
@@ -45,7 +45,7 @@ tPuzzleState puzzleStatePotis;
 MAX7221 seg1 = MAX7221(MAX7221_CS, 1, MAX7221::SEGMENT);
 
 // LedMatrix
-MD_MAXPanel ledm1 = MD_MAXPanel(MD_MAX72XX::FC16_HW, MAX7219_CS, 3, 2);
+MD_MAXPanel ledm1 = MD_MAXPanel(MD_MAX72XX::FC16_HW, MAX7219_CS, 4, 2);
 
 // Led Ring
 Adafruit_NeoPixel pixels =
@@ -109,7 +109,7 @@ void setup() {
 
   // Lock
   pinMode(LOCK_0, OUTPUT);
-  digitalWrite(LOCK_0, HIGH);
+  
 
   Serial.println("Setup finished");
 
@@ -285,6 +285,11 @@ void TaskLaserLock(void *pvParameters) {
       xTaskCreatePinnedToCore(TaskPiezoButtonReadout, "TaskPiezoButtonReadout",
                               2048, NULL, 2, NULL, 1);
 
+      // open LOCK
+      digitalWrite(LOCK_0, HIGH);
+      vTaskDelay(1000);
+      digitalWrite(LOCK_0, LOW);
+
       vTaskDelete(xHandleLedRing);
     }
 
@@ -447,14 +452,16 @@ void TaskPiezoButtonReadout(void *pvParameters) {
       vTaskSuspend(xHandleControlPuzzleState);
       Serial.println("Button 1 pressed");
       ledm1.clear();
-      ledm1.setCharSpacing(0);
+      // ledm1.setCharSpacing(0);
 
-      ledm1.drawHLine(13, 0, 23);
-      ledm1.drawText(0, 11, "STRANGER", MD_MAXPanel::ROT_0);
-      ledm1.drawText(3, 5, "THINGS", MD_MAXPanel::ROT_0);
-      ledm1.drawHLine(4, 0, 2);
-      ledm1.drawHLine(4, 21, 23);
-      ledm1.setCharSpacing(1);
+      // upper right corner => 0, 0
+
+      ledm1.drawHLine(1, 30, 0);
+      ledm1.drawText(30, 3, "STRANGER", MD_MAXPanel::ROT_180);
+      ledm1.drawText(26, 9, "THINGS", MD_MAXPanel::ROT_180);
+      // ledm1.drawHLine(4, 0, 2);
+      // ledm1.drawHLine(4, 26, 28);
+      // ledm1.setCharSpacing(1);
 
       float frequencies[] = {130.81, 164.81, 196.0, 246.94,
                              261.63, 246.94, 196.0, 164.81};
