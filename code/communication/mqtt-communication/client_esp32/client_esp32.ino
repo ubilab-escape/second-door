@@ -127,15 +127,6 @@ void loop() {
     if (!client.connected()) {
     reconnect();
     }
-  client.loop();
-  /*char tempString[8];
-  long now = millis();
-  if (now - lastMsg > 5000) {
-      lastMsg = now;
-      char JSONmessageBuffer[100];
-      //JSONencoder.printTo(JSONmessageBuffer, sizeof(JSONmessageBuffer));
-      serializeJson(doc,JSONmessageBuffer, 100);
-      Serial.println("send message");
-      client.publish("7/fusebox", JSONmessageBuffer);
+    client.loop();
     }*/
 }
