@@ -8,6 +8,9 @@
             "includePath": [
                 "/home/jay/Documents/Dev/integration/second-door/code/fusebox/design_software/include",
                 "/home/jay/Documents/Dev/integration/second-door/code/fusebox/design_software/src",
+                "/home/jay/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src",
+                "/home/jay/.platformio/lib/PubSubClient_ID89/src",
+                "/home/jay/.platformio/lib/ArduinoJson_ID64/src",
                 "/home/jay/.platformio/lib/PCF8574_ESP_ID1659",
                 "/home/jay/.platformio/lib/MD_MAXPanel_ID5488/src",
                 "/home/jay/.platformio/lib/MD_MAX72XX_ID5631/src",
@@ -99,7 +102,6 @@
                 "/home/jay/.platformio/packages/framework-arduinoespressif32/libraries/Ticker/src",
                 "/home/jay/.platformio/packages/framework-arduinoespressif32/libraries/Update/src",
                 "/home/jay/.platformio/packages/framework-arduinoespressif32/libraries/WebServer/src",
-                "/home/jay/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src",
                 "/home/jay/.platformio/packages/framework-arduinoespressif32/libraries/WiFiClientSecure/src",
                 "/home/jay/.platformio/packages/tool-unity",
                 ""
@@ -109,6 +111,9 @@
                 "path": [
                     "/home/jay/Documents/Dev/integration/second-door/code/fusebox/design_software/include",
                     "/home/jay/Documents/Dev/integration/second-door/code/fusebox/design_software/src",
+                    "/home/jay/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src",
+                    "/home/jay/.platformio/lib/PubSubClient_ID89/src",
+                    "/home/jay/.platformio/lib/ArduinoJson_ID64/src",
                     "/home/jay/.platformio/lib/PCF8574_ESP_ID1659",
                     "/home/jay/.platformio/lib/MD_MAXPanel_ID5488/src",
                     "/home/jay/.platformio/lib/MD_MAX72XX_ID5631/src",
@@ -200,7 +205,6 @@
                     "/home/jay/.platformio/packages/framework-arduinoespressif32/libraries/Ticker/src",
                     "/home/jay/.platformio/packages/framework-arduinoespressif32/libraries/Update/src",
                     "/home/jay/.platformio/packages/framework-arduinoespressif32/libraries/WebServer/src",
-                    "/home/jay/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src",
                     "/home/jay/.platformio/packages/framework-arduinoespressif32/libraries/WiFiClientSecure/src",
                     "/home/jay/.platformio/packages/tool-unity",
                     ""

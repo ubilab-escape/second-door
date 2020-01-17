@@ -7,6 +7,8 @@
 #include <MD_MAXPanel.h>
 #include <pcf8574_esp.h>
 #include "Fonts.h"
+#include <WiFi.h>
+#include "connection.h"
 
 #define DEBUG
 
@@ -87,6 +89,7 @@ void initPortExpander(void);
 void initPiezoBuzzer(void);
 void initLedMatrix(void);
 void initSevenSegment(void);
+void initWiFi(char *ssid, char *password);
 
 void setup() {
 
@@ -107,6 +110,7 @@ void setup() {
   initPortExpander();
   initSevenSegment();
   initLedMatrix();
+  initWiFi(UBILAB_SSID, UBILAB_PASSWORD);
 
   // Lock
   pinMode(LOCK_0, OUTPUT);
@@ -175,7 +179,7 @@ void initPortExpander(void) {
 }
 
 void initLedRing(void) {
-  Serial.println("Setup LED Ring ... ");
+  Serial.print("Setup LED Ring ... ");
   // set led ring to red
   pixels.begin();
   pixels.setBrightness(255); // die Helligkeit setzen 0 dunke -> 255 ganz hell
@@ -191,6 +195,18 @@ void initLedRing(void) {
   pinMode(detectorPin, INPUT); // Laser Detector als Eingangssignal setzen
 
   Serial.println("done!");
+}
+
+void initWiFi(char *ssid, char *password) {
+  Serial.print("Setup WiFi Connection ... ");
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    vTaskDelay(500);
+    Serial.print(". ");
+  }
+  Serial.print("Connected with IP address: ");
+  Serial.print(WiFi.localIP());
+  Serial.println(" done!");
 }
 
 void TaskPotentiometerReadout(void *pvParameters) {
@@ -354,7 +370,7 @@ void TaskWiring1Readout(void *pvParameters) {
       Serial.println("Rewiring 1 solved!");
       puzzleStateRewiring1 = SOLVED;
     } else {
-      Serial.println("Rewering 1 not solved!");
+      Serial.println("Rewiring 1 not solved!");
       puzzleStateRewiring1 = NOT_SOLVED;
     }
 
