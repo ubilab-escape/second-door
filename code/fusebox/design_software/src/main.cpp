@@ -325,14 +325,16 @@ void TaskWiring0Readout(void *pvParameters) {
     for (int i = 0; i <= 4; i++) {
       rewiringValues0[i] = analogRead(rewiringPins0[i]);
       rewiringValues0[i] = map(rewiringValues0[i], 0, 4095, 0, 33);
+      // Serial.println(rewiringValues0[i]);
     }
+
     //TODO: CHANGE ORDER
     // Measured Values: 33 25 19 13 7
-    if ((rewiringValues0[0] >= 30 && rewiringValues0[0] <= 36) &&
-        (rewiringValues0[1] >= 22 && rewiringValues0[1] <= 28) &&
-        (rewiringValues0[2] >= 16 && rewiringValues0[2] <= 22) &&
-        (rewiringValues0[3] >= 10 && rewiringValues0[3] <= 16) &&
-        (rewiringValues0[4] >= 04 && rewiringValues0[4] <= 10)) {
+    if ((rewiringValues0[3] >= 30 && rewiringValues0[3] <= 36) &&
+        (rewiringValues0[4] >= 22 && rewiringValues0[4] <= 28) &&
+        (rewiringValues0[1] >= 16 && rewiringValues0[1] <= 22) &&
+        (rewiringValues0[0] >= 10 && rewiringValues0[0] <= 16) &&
+        (rewiringValues0[2] >= 4 && rewiringValues0[2] <= 10)) {
       Serial.println("Rewiring 0 solved!");
       puzzleStateRewiring0 = SOLVED;
     } else {
@@ -407,7 +409,7 @@ void TaskControlPuzzleState(void *pvParameters) {
         puzzleStateRewiring1 == SOLVED) {
       Serial.println("All Puzzles Solved");
       ledm1.clear();
-      ledm1.drawText(1, 14, "Solved!");
+      ledm1.drawText(25, 7, "Solved!", MD_MAXPanel::ROT_180);
 
       // Remove Solved Tasks
       vTaskSuspend(xHandleWiring0Readout);
