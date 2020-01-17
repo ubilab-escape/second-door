@@ -7,6 +7,7 @@
 #include <ESP8266WiFi.h>
 #include "uMQTTBroker.h"
 #include <ArduinoJson.h>
+#include "wifi_secure.h"
 
 uMQTTBroker myBroker;
 
@@ -14,20 +15,13 @@ uMQTTBroker myBroker;
 StaticJsonDocument<300> doc;
 JsonObject JSONencoder = doc.to<JsonObject>();
 
-
-/*
- * Your WiFi config here
- */
-const char* ssid     = "Thomass iPhone";
-const char* pass = "12345670";
-
 /*
  * WiFi init stuff
  */
 void startWiFiClient()
 {
   Serial.println("Connecting to "+(String)ssid);
-  WiFi.begin(ssid, pass);
+  WiFi.begin(ssid, password);
   
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
@@ -41,7 +35,7 @@ void startWiFiClient()
 
 void startWiFiAP()
 {
-  WiFi.softAP(ssid, pass);
+  WiFi.softAP(ssid, password);
   Serial.println("AP started");
   Serial.println("IP address: " + WiFi.softAPIP().toString());
 }

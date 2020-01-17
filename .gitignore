@@ -88,3 +88,7 @@ eagle.epf
 ._*
 .Spotlight-V100
 .Trashes
+
+# Wifi password #
+######################
+wifi_secure.h

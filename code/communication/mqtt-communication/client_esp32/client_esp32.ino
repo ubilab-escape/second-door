@@ -1,14 +1,13 @@
 #include <WiFi.h>
 #include <PubSubClient.h>
 #include <ArduinoJson.h>
+#include "wifi_secure.h"
 
-const char* ssid     = "Thomass iPhone";
-const char* password = "12345670";
+
 
 const char* Topics[4] = {"7/fusebox", "7/robot", "7/laser", "7/buttonServer"};
 #define topicNumber 0 //chose which topic should used
 const char* mqtt_topic = Topics[topicNumber];
-
 
 //Json Buffer
 
@@ -18,7 +17,7 @@ StaticJsonDocument<300> rxdoc;
 
 // Add your MQTT Broker IP address, example:
 //const char* mqtt_server = "192.168.1.144";
-const char* mqtt_server = "172.20.10.9";
+const char* mqtt_server = "10.0.0.2";
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -30,9 +29,9 @@ int value = 0;
 ///////////////////////////////////////////////////////////////////////////////////////
 void setup() {
   // put your setup code here, to run once:
- Serial.begin(115200);
+    Serial.begin(115200);
 
-   setup_wifi();
+  setup_wifi();
   client.setServer(mqtt_server, 1883);
   client.setCallback(callback);
 
@@ -128,5 +127,4 @@ void loop() {
     reconnect();
     }
     client.loop();
-    }*/
-}
+    }
