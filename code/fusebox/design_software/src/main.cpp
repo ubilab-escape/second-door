@@ -8,7 +8,7 @@
 #include <pcf8574_esp.h>
 #include "Fonts.h"
 
-// #define DEBUG
+#define DEBUG
 
 #if CONFIG_FREERTOS_UNICORE
 #define ARDUINO_RUNNING_CORE 0
@@ -54,6 +54,8 @@ uint8_t sequence[6];
 uint8_t numberOfSequences = 0;
 int old_time_in_ms = millis();
 bool puzzle_solved = false;
+void blink_ring(uint8_t blinking_number, uint8_t frequency);
+uint8_t analyse_sequence(uint8_t sequence[6], uint8_t target);
 
 // ADC
 Adafruit_ADS1015 ads;
@@ -70,14 +72,13 @@ void TaskPiezoButtonReadout(void *pvParameters);
 void TaskControlPuzzleState(void *pvParameters);
 void TaskLaserLock(void *pvParameters);
 void TaskControlButtonsReadout(void *pvParameters); // TODO: Implement
+
+// Task Handles
 TaskHandle_t xHandleLedRing;
 TaskHandle_t xHandleControlPuzzleState;
 TaskHandle_t xHandlePotentiometerReadout;
 TaskHandle_t xHandleWiring0Readout;
 TaskHandle_t xHandleWiring1Readout;
-
-void blink_ring(uint8_t blinking_number, uint8_t frequency);
-uint8_t analyse_sequence(uint8_t sequence[6], uint8_t target);
 
 // Init Functions
 void initPotentiometers(void);
@@ -109,7 +110,6 @@ void setup() {
 
   // Lock
   pinMode(LOCK_0, OUTPUT);
-  
 
   Serial.println("Setup finished");
 
@@ -196,25 +196,18 @@ void initLedRing(void) {
 void TaskPotentiometerReadout(void *pvParameters) {
   (void)pvParameters;
   for (;;) {
-    Serial.print("TaskPotentiometerReadout: ");
+    Serial.print("TaskPotentiometerReadout: \t");
     uint16_t pValues[4];
-    uint16_t adcValues[4];
-
-    adcValues[0] = ads.readADC_SingleEnded(0);
-    adcValues[1] = ads.readADC_SingleEnded(1);
-    adcValues[2] = ads.readADC_SingleEnded(2);
-    adcValues[3] = ads.readADC_SingleEnded(3);
+    float adcValues[4];
 
     for (uint8_t i = 0; i < 4; i++) {
-      if (adcValues[i] == 0) {
-        adcValues[i] = 1;
-      }
+      adcValues[i] = ads.readADC_SingleEnded(i);
+      adcValues[i] = adcValues[i] * 9 / 1024; 
+      pValues[i] = adcValues[i];
+      Serial.print(i); Serial.print(": ");
+      Serial.print(pValues[i]); 
+      Serial.print(" ");
     }
-
-    pValues[0] = map(adcValues[0], 0, 1024, 0, 9);
-    pValues[1] = map(adcValues[1], 0, 1024, 0, 9);
-    pValues[2] = map(adcValues[2], 0, 1024, 0, 9);
-    pValues[3] = map(adcValues[3], 0, 1025, 0, 9);
 
     seg1.transferData(0x01, pValues[0]);
     seg1.transferData(0x02, pValues[1]);
@@ -317,18 +310,20 @@ void TaskLaserLock(void *pvParameters) {
 void TaskWiring0Readout(void *pvParameters) {
   (void)pvParameters;
   for (;;) {
-    Serial.print("TaskWiring0Readout: ");
+    Serial.print("TaskWiring0Readout: \t\t");
 
-    uint16_t rewiringValues0[5];
+    float rewiringValues0[5];
     uint16_t rewiringPins0[] = {REWIRE_0_1, REWIRE_0_2, REWIRE_0_3, REWIRE_0_4,
                                 REWIRE_0_5};
     for (int i = 0; i <= 4; i++) {
       rewiringValues0[i] = analogRead(rewiringPins0[i]);
-      rewiringValues0[i] = map(rewiringValues0[i], 0, 4095, 0, 33);
-      // Serial.println(rewiringValues0[i]);
+      rewiringValues0[i] = rewiringValues0[i] / 4095 * 33;
+      Serial.print(i); Serial.print(": ");
+      Serial.print(rewiringValues0[i]); 
+      Serial.print(" ");
+      
     }
 
-    //TODO: CHANGE ORDER
     // Measured Values: 33 25 19 13 7
     if ((rewiringValues0[3] >= 30 && rewiringValues0[3] <= 36) &&
         (rewiringValues0[4] >= 22 && rewiringValues0[4] <= 28) &&
@@ -349,11 +344,9 @@ void TaskWiring0Readout(void *pvParameters) {
 void TaskWiring1Readout(void *pvParameters) {
   (void)pvParameters;
   for (;;) {
-    Serial.print("TaskWiring1Readout: ");
+    Serial.print("TaskWiring1Readout: \t\t");
 
     uint8_t values = portExpander0.read8();
-    // Serial.print("Port Expander Values: ");
-    // Serial.println(values, BIN);
 
     // 0x58 + 0x42 = 0x9A = 0b10011010
 
@@ -403,7 +396,7 @@ uint8_t analyse_sequence(uint8_t sequence[6], uint8_t target) {
 void TaskControlPuzzleState(void *pvParameters) {
   (void)pvParameters;
   for (;;) {
-    Serial.print("TaskControlPuzzleState: ");
+    Serial.print("TaskControlPuzzleState: \t");
 
     if (puzzleStatePotis == SOLVED && puzzleStateRewiring0 == SOLVED &&
         puzzleStateRewiring1 == SOLVED) {
@@ -416,7 +409,6 @@ void TaskControlPuzzleState(void *pvParameters) {
       vTaskSuspend(xHandleWiring1Readout);
       vTaskSuspend(xHandlePotentiometerReadout);
 
-      // TODO: OPEN LOCK!!!
       // TODO: MQTT update
 
     } else {
@@ -447,7 +439,7 @@ void TaskControlPuzzleState(void *pvParameters) {
 void TaskPiezoButtonReadout(void *pvParameters) {
   (void)pvParameters;
   for (;;) {
-    Serial.print("TaskPiezoButtonReadout: ");
+    Serial.print("TaskPiezoButtonReadout: \t");
     uint16_t buttonState1 = digitalRead(BUTTON_0);
     uint16_t buttonState2 = digitalRead(BUTTON_1);
     if (buttonState1) {
