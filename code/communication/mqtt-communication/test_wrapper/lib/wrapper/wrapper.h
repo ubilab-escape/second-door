@@ -27,7 +27,7 @@ void setup_wifi(const char* ssid, const char* password) {
 class mqtt_wrapper {
  private:
   const char* mqtt_topic;
-  const char* mqtt_server = "172.20.10.9";
+  const char* mqtt_server = "10.0.0.2";
   StaticJsonDocument<300> doc;
   JsonObject JSONencoder = doc.to<JsonObject>();
   PubSubClient* client;
@@ -37,8 +37,10 @@ class mqtt_wrapper {
   ~mqtt_wrapper();
 
   void init(const char* ssid, const char* password, const char* topic);
+  void reconnect();
   virtual void callback(char* topic, byte* message, unsigned int length);
-  void loop() { client->loop(); }
+  virtual void publish(const char* methode, const char* state);
+  void loop();
 };
 
 mqtt_wrapper::mqtt_wrapper() {}
@@ -51,11 +53,39 @@ void mqtt_wrapper::init(const char* ssid, const char* password, const char* topi
   client = new PubSubClient(espClient);
   setup_wifi(ssid, password);
   client->setServer(mqtt_server, 1883);
-  // client->setCallback(callback);
   client->setCallback([this](char* topic, byte* payload, unsigned int length) {
     this->callback(topic, payload, length);
   });
   client->subscribe(mqtt_topic);
+  reconnect();
+}
+
+void mqtt_wrapper::reconnect() {
+  // Loop until we're reconnected
+  client->connect("ESP32Client");
+  Serial.println("HUI");
+  while (!client->connected()) {
+    Serial.print("Attempting MQTT connection...");
+    // Attempt to connect
+    if (client->connect("ESP32Client")) {
+      Serial.println("connected");
+      // Subscribe
+      client->subscribe(mqtt_topic);
+    } else {
+      Serial.print("failed, rc=");
+      Serial.print(client->state());
+      Serial.println(" try again in 5 seconds");
+      // Wait 5 seconds before retrying
+      delay(5000);
+    }
+  }
+}
+
+void mqtt_wrapper::loop() {
+  if (!client->connected()) {
+    reconnect();
+  }
+  client->loop();
 }
 
 void mqtt_wrapper::callback(char* topic, byte* message, unsigned int length) {
@@ -89,4 +119,17 @@ void mqtt_wrapper::callback(char* topic, byte* message, unsigned int length) {
       mqtt_publish("Status","inactive");
     }
     */
+}
+
+void mqtt_wrapper::publish(const char* methode, const char* state) {
+  JSONencoder["method"] = methode;
+  JSONencoder["state"] = state;
+  JSONencoder["data"] = 0;
+
+  char JSONmessageBuffer[100];
+
+  serializeJson(doc, JSONmessageBuffer, 100);
+  Serial.print("send message");
+  Serial.println(JSONencoder);
+  client->publish(mqtt_topic, JSONmessageBuffer);
 }
