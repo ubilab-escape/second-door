@@ -3,7 +3,7 @@
 #include <Adafruit_NeoPixel.h>
 #include "wifi_secure.h"
 
-#include "mqtt_base.h"
+#include "MqttBase.h"
 
 const char* mqtt_topic = "7/laser";
 const char* mqtt_server = "10.0.0.2";
@@ -22,35 +22,11 @@ const int duty_50 = 512;
 #define NUM_PIXEL 13
 Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUM_PIXEL, RGB_RING_PIN, NEO_GRB + NEO_KHZ800);
 
+MqttBase* mqtt_com;
 
-mqtt_base *base;
-
-StaticJsonDocument<300> doc;
-JsonObject JSONencoder = doc.to<JsonObject>();
-
-void callback(char* topic, byte* message, unsigned int length) {
-  Serial.print("Message arrived on topic: ");
-  Serial.print(topic);
-  Serial.print(". Message: ");
-  String messageTemp;
-
-  for (int i = 0; i < length; i++) {
-    Serial.print((char)message[i]);
-    messageTemp += (char)message[i];
-  }
-  Serial.println();
-  deserializeJson(doc, message);
-  const char* method1 = doc["method"];
-  const char* state = doc["state"];
-  int daten = doc["data"];
-  Serial.print("Methode: ");
-  Serial.println(method1);
-  Serial.print("State: ");
-  Serial.println(state);
-  Serial.print("Daten: ");
-  Serial.println(daten);
-
-  if (strcmp(method1, "TIGGER") == 0) {
+void callback(const char* method1, const char* state, int daten) {
+  Serial.println("LOGIC CALLBACK");
+  if (strcmp(method1, "TRIGGER") == 0) {
     Serial.println("HUI");
     if (strcmp(state, "ON") == 0) {
       // configure LED PWM functionalitites
@@ -87,12 +63,16 @@ void callback(char* topic, byte* message, unsigned int length) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 void setup() {
   Serial.begin(115200);
-  base = new mqtt_base();
-  base->init(ssid, password, "7/laser");
+  mqtt_com = new MqttBase("10.0.0.2", 1883);
+  mqtt_com->init(ssid, password, "7/laser", callback);
   // init_com(ssid, password, mqtt_server, callback);
 }
 
 // Loop
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
-void loop() { base->loop(); }
+void loop() {
+  mqtt_com->loop();
+  delay(2000);
+  //mqtt_com->publish("STATUS", "solved");
+}
