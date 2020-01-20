@@ -30,7 +30,9 @@ class mqtt_wrapper {
   const char* mqtt_server = "10.0.0.2";
   StaticJsonDocument<300> doc;
   JsonObject JSONencoder = doc.to<JsonObject>();
+  // std::unique_ptr<PubSubClient> client;
   PubSubClient* client;
+  WiFiClient* espClient;
 
  public:
   mqtt_wrapper();
@@ -43,27 +45,33 @@ class mqtt_wrapper {
   void loop();
 };
 
-mqtt_wrapper::mqtt_wrapper() {}
+mqtt_wrapper::mqtt_wrapper() {
+
+
+}
 
 mqtt_wrapper::~mqtt_wrapper() {}
 
 void mqtt_wrapper::init(const char* ssid, const char* password, const char* topic) {
   mqtt_topic = topic;
-  WiFiClient espClient;
-  client = new PubSubClient(espClient);
+
   setup_wifi(ssid, password);
+  
+  client = new PubSubClient();
+  espClient = new WiFiClient();
+  client->setClient(* espClient);
   client->setServer(mqtt_server, 1883);
   client->setCallback([this](char* topic, byte* payload, unsigned int length) {
     this->callback(topic, payload, length);
   });
   client->subscribe(mqtt_topic);
-  reconnect();
+  // reconnect();
+  
 }
 
 void mqtt_wrapper::reconnect() {
-  // Loop until we're reconnected
-  client->connect("ESP32Client");
-  Serial.println("HUI");
+  
+  
   while (!client->connected()) {
     Serial.print("Attempting MQTT connection...");
     // Attempt to connect

@@ -6,17 +6,18 @@
 //const char* ssid = "Thomass iPhone";
 //const char* pw = "12345670";
 
-mqtt_wrapper wrapper;
+mqtt_wrapper *wrapper;
 
 
 void setup() {
   Serial.begin(115200);
-  wrapper.init(ssid, password, "7/laser");
+  wrapper = new mqtt_wrapper();
+  wrapper->init(ssid, password, "7/laser");
 }
 
 void loop() {
-  wrapper.loop();
-  wrapper.publish("TRIGGER", "ON");
+  wrapper->loop();
+  wrapper->publish("TRIGGER", "ON");
   delay(1000);
 
   // put your main code here, to run repeatedly:
