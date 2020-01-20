@@ -92,3 +92,6 @@ eagle.epf
 # Wifi password #
 ######################
 wifi_secure.h
+# Platformio files
+######################
+.pio
