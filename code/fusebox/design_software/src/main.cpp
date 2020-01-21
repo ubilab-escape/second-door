@@ -7,10 +7,7 @@
 #include <MD_MAXPanel.h>
 #include <pcf8574_esp.h>
 #include "Fonts.h"
-#include <WiFi.h>
-#include "connection.h"
 
-#define DEBUG
 
 #if CONFIG_FREERTOS_UNICORE
 #define ARDUINO_RUNNING_CORE 0
@@ -38,10 +35,14 @@
 #define REWIRE_0_5 34
 
 // Puzzle States
-enum tPuzzleState { INIT, SOLVED, NOT_SOLVED };
-tPuzzleState puzzleStateRewiring0;
-tPuzzleState puzzleStateRewiring1;
-tPuzzleState puzzleStatePotis;
+
+enum tPuzzleState {INACTIVE, ACTIVE, SOLVED, UNSOLVED};
+
+
+tPuzzleState puzzleStateRewiring0 = UNSOLVED;
+tPuzzleState puzzleStateRewiring1 = UNSOLVED;
+tPuzzleState puzzleStatePotis = UNSOLVED;
+tPuzzleState puzzleStateLaserLock = UNSOLVED;
 
 // 7 Segment
 MAX7221 seg1 = MAX7221(MAX7221_CS, 1, MAX7221::SEGMENT);
@@ -89,14 +90,10 @@ void initPortExpander(void);
 void initPiezoBuzzer(void);
 void initLedMatrix(void);
 void initSevenSegment(void);
-void initWiFi(char *ssid, char *password);
 
 void setup() {
 
   // TODO: Implement MQTT Connection
-
-  puzzleStateRewiring0 = INIT;
-  puzzleStatePotis = INIT;
 
   // disableCore0WDT();
   // disableCore1WDT();
@@ -110,7 +107,6 @@ void setup() {
   initPortExpander();
   initSevenSegment();
   initLedMatrix();
-  initWiFi(UBILAB_SSID, UBILAB_PASSWORD);
 
   // Lock
   pinMode(LOCK_0, OUTPUT);
@@ -121,20 +117,19 @@ void setup() {
   xTaskCreatePinnedToCore(TaskControlPuzzleState, "TaskControlPuzzleState",
                           2048, NULL, 1, &xHandleControlPuzzleState, 0);
 
-#ifndef DEBUG
+  // Riddle Tasks
   xTaskCreatePinnedToCore(TaskLaserLock, "TaskLaserLock", 2048, NULL, 2,
                           &xHandleLedRing, 1);
-#else
   xTaskCreatePinnedToCore(TaskPotentiometerReadout, "TaskPotentiometerReadout",
                           2048, NULL, 2, &xHandlePotentiometerReadout, 1);
   xTaskCreatePinnedToCore(TaskWiring0Readout, "TaskWiring0Readout", 2048, NULL,
                           3, &xHandleWiring0Readout, 0);
   xTaskCreatePinnedToCore(TaskWiring1Readout, "TaskWiring1Readout", 2048, NULL,
                           3, &xHandleWiring1Readout, 0);
+
+  // Fake Riddle Tasks
   xTaskCreatePinnedToCore(TaskPiezoButtonReadout, "TaskPiezoButtonReadout",
                           2048, NULL, 2, NULL, 1);
-
-#endif
 }
 
 void loop() {
@@ -197,18 +192,6 @@ void initLedRing(void) {
   Serial.println("done!");
 }
 
-void initWiFi(char *ssid, char *password) {
-  Serial.print("Setup WiFi Connection ... ");
-  WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED) {
-    vTaskDelay(500);
-    Serial.print(". ");
-  }
-  Serial.print("Connected with IP address: ");
-  Serial.print(WiFi.localIP());
-  Serial.println(" done!");
-}
-
 void TaskPotentiometerReadout(void *pvParameters) {
   (void)pvParameters;
   for (;;) {
@@ -236,7 +219,7 @@ void TaskPotentiometerReadout(void *pvParameters) {
       puzzleStatePotis = SOLVED;
     } else {
       Serial.println("Potis Not solved!");
-      puzzleStatePotis = NOT_SOLVED;
+      puzzleStatePotis = UNSOLVED;
     }
 
     vTaskDelay(500);
@@ -257,7 +240,7 @@ void TaskLaserLock(void *pvParameters) {
       uint8_t ones = analyse_sequence(sequence, 1);
 
       // chekc if sequenz is correct
-      if (zeros == ones && !puzzle_solved) {
+      if (zeros == ones && puzzleStateLaserLock == UNSOLVED) {
         Serial.print("Sequence dedected ");
         Serial.print(zeros);
         Serial.print(" ");
@@ -278,28 +261,15 @@ void TaskLaserLock(void *pvParameters) {
 
     // check if puzzle is solved
     if (numberOfSequences > MAX_SEQUENZES) {
-      puzzle_solved = true;
+      puzzleStateLaserLock = SOLVED;
       Serial.println("Fuse Box open");
       numberOfSequences = 0;
       blink_ring(5, 2);
-
-      // Attach Tasks
-      xTaskCreatePinnedToCore(TaskPotentiometerReadout,
-                              "TaskPotentiometerReadout", 2048,
-                              &xHandlePotentiometerReadout, 2, NULL, 1);
-      xTaskCreatePinnedToCore(TaskWiring0Readout, "TaskWiring0Readout", 2048,
-                              &xHandleWiring0Readout, 3, NULL, 0);
-      xTaskCreatePinnedToCore(TaskWiring1Readout, "TaskWiring0Readout", 2048,
-                              &xHandleWiring1Readout, 3, NULL, 0);
-      xTaskCreatePinnedToCore(TaskPiezoButtonReadout, "TaskPiezoButtonReadout",
-                              2048, NULL, 2, NULL, 1);
 
       // open LOCK
       digitalWrite(LOCK_0, HIGH);
       vTaskDelay(1000);
       digitalWrite(LOCK_0, LOW);
-
-      vTaskDelete(xHandleLedRing);
     }
 
     // int time_in_ms = xTaskGetTickCount() - old_time_in_ms;
@@ -350,7 +320,7 @@ void TaskWiring0Readout(void *pvParameters) {
       puzzleStateRewiring0 = SOLVED;
     } else {
       Serial.println("Rewiring 0 not solved!");
-      puzzleStateRewiring0 = NOT_SOLVED;
+      puzzleStateRewiring0 = UNSOLVED;
     }
 
     vTaskDelay(500);
@@ -371,7 +341,7 @@ void TaskWiring1Readout(void *pvParameters) {
       puzzleStateRewiring1 = SOLVED;
     } else {
       Serial.println("Rewiring 1 not solved!");
-      puzzleStateRewiring1 = NOT_SOLVED;
+      puzzleStateRewiring1 = UNSOLVED;
     }
 
     vTaskDelay(500);
@@ -415,7 +385,7 @@ void TaskControlPuzzleState(void *pvParameters) {
     Serial.print("TaskControlPuzzleState: \t");
 
     if (puzzleStatePotis == SOLVED && puzzleStateRewiring0 == SOLVED &&
-        puzzleStateRewiring1 == SOLVED) {
+        puzzleStateRewiring1 == SOLVED && puzzleStateLaserLock == SOLVED) {
       Serial.println("All Puzzles Solved");
       ledm1.clear();
       ledm1.drawText(25, 7, "Solved!", MD_MAXPanel::ROT_180);
@@ -424,6 +394,7 @@ void TaskControlPuzzleState(void *pvParameters) {
       vTaskSuspend(xHandleWiring0Readout);
       vTaskSuspend(xHandleWiring1Readout);
       vTaskSuspend(xHandlePotentiometerReadout);
+      vTaskSuspend(xHandleLedRing);
 
       // TODO: MQTT update
 
@@ -445,6 +416,11 @@ void TaskControlPuzzleState(void *pvParameters) {
         ledm1.drawCircle(20, 11, 2);
       } else {
         ledm1.drawRectangle(20, 11, 22, 13);
+      }
+      if (puzzleStateLaserLock == SOLVED) {
+        ledm1.drawCircle(28, 11, 2);
+      } else {
+        ledm1.drawRectangle(28, 11, 30, 13);
       }
     }
 
