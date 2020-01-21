@@ -1,6 +1,7 @@
 #include "Fonts.h"
 #include "MAX7221.h"
 #include "Wire.h"
+#include "serial_debug.h"
 #include "wifi_secure.h"
 #include <Adafruit_ADS1015.h>
 #include <Adafruit_NeoPixel.h>
@@ -11,20 +12,8 @@
 #include <pcf8574_esp.h>
 #include <vector>
 
-#define MAX_DEBUG
-
-#ifdef MAX_DEBUG
-#define SERIALPRINT(s, v)   { Serial.print(F(s)); Serial.print(v); }      ///< Print a string followed by a value (decimal)
-#define SERIALPRINTX(s, v)  { Serial.print(F(s)); Serial.print(v, HEX); } ///< Print a string followed by a value (hex)
-#define SERIALPRINTB(s, v)  { Serial.print(F(s)); Serial.print(v, BIN); } ///< Print a string followed by a value (binary)
-#define SERIALPRINTS(s)     { Serial.print(F(s)); }                       ///< Print a string
-#else
-#define SERIALPRINT(s, v)   ///< Print a string followed by a value (decimal)
-#define SERIALPRINTX(s, v)  ///< Print a string followed by a value (hex)
-#define SERIALPRINTB(s, v)  ///< Print a string followed by a value (binary)
-#define SERIALPRINTS(s)     ///< Print a string
-#endif
-
+// define this to get serial debug messages
+#define SERIAL_DEBUG
 
 #if CONFIG_FREERTOS_UNICORE
 #define ARDUINO_RUNNING_CORE 0
