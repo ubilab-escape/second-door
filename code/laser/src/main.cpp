@@ -8,6 +8,7 @@
 
 // const char* mqtt_topic = "7/laser";
 const char* mqtt_server = "10.0.0.2";
+const char* mqtt_name = "LaserClient";
 
 #define LASER_PIN 21
 #define SEQUENDE_SIZE 5
@@ -72,7 +73,7 @@ void setup() {
   std::vector<std::function<void(const char*, const char*, int)>> logic_callbacks;
   logic_callbacks.push_back(callback);
 
-  mqtt_com = new MqttBase("10.0.0.2", 1883);
+  mqtt_com = new MqttBase(mqtt_server, mqtt_name, 1883);
   mqtt_com->init(ssid, password, mqtt_topics, logic_callbacks);
   // init_com(ssid, password, mqtt_server, callback);
 }
