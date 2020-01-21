@@ -1,3 +1,4 @@
+#include "Fonts.h"
 #include "MAX7221.h"
 #include "Wire.h"
 #include <Adafruit_ADS1015.h>
@@ -6,8 +7,7 @@
 #include <MD_MAX72xx.h>
 #include <MD_MAXPanel.h>
 #include <pcf8574_esp.h>
-#include "Fonts.h"
-
+#include <MqttBase.h>
 
 #if CONFIG_FREERTOS_UNICORE
 #define ARDUINO_RUNNING_CORE 0
@@ -36,8 +36,7 @@
 
 // Puzzle States
 
-enum tPuzzleState {INACTIVE, ACTIVE, SOLVED, UNSOLVED};
-
+enum tPuzzleState { INACTIVE, ACTIVE, SOLVED, UNSOLVED };
 
 tPuzzleState puzzleStateRewiring0 = UNSOLVED;
 tPuzzleState puzzleStateRewiring1 = UNSOLVED;
@@ -201,10 +200,11 @@ void TaskPotentiometerReadout(void *pvParameters) {
 
     for (uint8_t i = 0; i < 4; i++) {
       adcValues[i] = ads.readADC_SingleEnded(i);
-      adcValues[i] = adcValues[i] * 9 / 1024; 
+      adcValues[i] = adcValues[i] * 9 / 1024;
       pValues[i] = adcValues[i];
-      Serial.print(i); Serial.print(": ");
-      Serial.print(pValues[i]); 
+      Serial.print(i);
+      Serial.print(": ");
+      Serial.print(pValues[i]);
       Serial.print(" ");
     }
 
@@ -304,10 +304,10 @@ void TaskWiring0Readout(void *pvParameters) {
     for (int i = 0; i <= 4; i++) {
       rewiringValues0[i] = analogRead(rewiringPins0[i]);
       rewiringValues0[i] = rewiringValues0[i] / 4095 * 33;
-      Serial.print(i); Serial.print(": ");
-      Serial.print(rewiringValues0[i]); 
+      Serial.print(i);
+      Serial.print(": ");
+      Serial.print(rewiringValues0[i]);
       Serial.print(" ");
-      
     }
 
     // Measured Values: 33 25 19 13 7
@@ -370,7 +370,7 @@ void blink_ring(uint8_t blinking_number, uint8_t frequency) {
 
 uint8_t analyse_sequence(uint8_t sequence[6], uint8_t target) {
   uint8_t target_number = 0;
-  uint8_t len = sizeof(sequence);
+  uint8_t len = 6;
   for (int i = 0; i < len; i++) {
     if (sequence[i] == target) {
       target_number++;
