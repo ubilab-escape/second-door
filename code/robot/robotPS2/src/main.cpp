@@ -7,6 +7,7 @@
  ******************************************************************/
 
 #include <Adafruit_NeoPixel.h>
+#include <SoftwareSerial.h> 
 #include <Arduino_FreeRTOS.h>
 #include <Robot.h>
 
@@ -38,6 +39,8 @@ void TaskCheckESP(void *pvParameters);
 Robot robot;
 
 Adafruit_NeoPixel pixels(NUMPIXELS, PIXEL_PIN, NEO_GRB + NEO_KHZ800);
+
+SoftwareSerial mySerial(2, 4); // RX, TX
 
 /////////////////////////////////////
 // DO NOT USE millis with RTOS
@@ -73,7 +76,7 @@ void drive_forward(byte val) {
 }
 
 void setup() {
-  Serial.begin(115200);
+  mySerial.begin(9600);
 
   pixels.begin();
   pixels.clear();
@@ -204,14 +207,14 @@ void TaskCheckESP(void *pvParameters) {
   (void)pvParameters;
 
   for (;;) {
-    if (Serial.available()) {
-      unsigned char income = Serial.read();
-      if (income) {
+    if (mySerial.available()) {
+      unsigned char income = mySerial.read();
+      if (income == 48) {
         robot.robotOn = true;
       } else {
         robot.robotOn = false;
       }
     }
-    vTaskDelay(5);  // one tick delay (15ms) in between reads for stability
+    vTaskDelay(1000);  // one tick delay (15ms) in between reads for stability
   }
 }

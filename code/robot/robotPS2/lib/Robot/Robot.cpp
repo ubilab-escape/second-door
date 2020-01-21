@@ -24,33 +24,35 @@ void Robot::init(uint8_t clk, uint8_t cmd, uint8_t att, uint8_t dat, bool pressu
 
 void Robot::controll() {
   ps2x.read_gamepad(false, vibrate);
-  if (ps2x.Button(PSB_PAD_UP)) {
-    drive_forward();
-  }
-  if (ps2x.Button(PSB_PAD_DOWN)) {
-    drive_backward();
-  }
-  if (ps2x.Button(PSB_PAD_RIGHT)) {
-    turn_right();
-  }
-  if (ps2x.Button(PSB_PAD_LEFT)) {
-    turn_left();
-  }
-  if (controll_button_pressed() == false) {
-    stop_motors();
-  }
-  // for colors
-  if (ps2x.Button(PSB_CIRCLE)) {
-    color = red;
-  }
-  if (ps2x.Button(PSB_TRIANGLE)) {
-    color = green;
-  }
-  if (ps2x.Button(PSB_SQUARE)) {
-    color = magenta;
-  }
-  if (ps2x.Button(PSB_CROSS)) {
-    color = blue;
+  if (robotOn == true) {
+    if (ps2x.Button(PSB_PAD_UP)) {
+      drive_forward();
+    }
+    if (ps2x.Button(PSB_PAD_DOWN)) {
+      drive_backward();
+    }
+    if (ps2x.Button(PSB_PAD_RIGHT)) {
+      turn_right();
+    }
+    if (ps2x.Button(PSB_PAD_LEFT)) {
+      turn_left();
+    }
+    if (controll_button_pressed() == false) {
+      stop_motors();
+    }
+    // for colors
+    if (ps2x.Button(PSB_CIRCLE)) {
+      color = red;
+    }
+    if (ps2x.Button(PSB_TRIANGLE)) {
+      color = green;
+    }
+    if (ps2x.Button(PSB_SQUARE)) {
+      color = magenta;
+    }
+    if (ps2x.Button(PSB_CROSS)) {
+      color = blue;
+    }
   }
 }
 
