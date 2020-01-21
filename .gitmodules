@@ -1,3 +1,6 @@
 [submodule "code/laser/lib/MqttBase"]
 	path = code/laser/lib/MqttBase
 	url = https://github.com/JayWiz/MqttBase.git
+[submodule "code/Push_Button/lib/MqttBase"]
+	path = code/Push_Button/lib/MqttBase
+	url = https://github.com/JayWiz/MqttBase.git
