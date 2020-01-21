@@ -1,6 +1,4 @@
-/**
- * http://henrysbench.capnfatz.com/henrys-bench/arduino-projects-tips-and-more/arduino-ide-nodemcu-esp-12e-digital-input-basics/#The_pinMode_Command
- */
+
 #include <Arduino.h>
 #include "wifi_secure.h"
 #include "string.h"
@@ -55,12 +53,12 @@ void callback(const char* method1, const char* state, int daten) {
     if (strcmp(state, "off") == 0) {
       // configure LED PWM functionalitites
         status = 0;
-        mqtt_com->publish(mqtt_topic,"Status", "inactive", 0);
+        mqtt_com->publish(mqtt_topic,"STATUS", "inactive", 0);
       }
     if (strcmp(state, "on") == 0) {
       // configure LED PWM functionalitites
         status = 1;
-        mqtt_com->publish(mqtt_topic,"Status", "active", 0);
+        mqtt_com->publish(mqtt_topic,"STATUS", "active", 0);
       }
     }
 
