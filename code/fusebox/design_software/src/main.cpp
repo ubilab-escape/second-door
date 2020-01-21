@@ -1,3 +1,6 @@
+// define this to get serial debug messages
+#define SERIAL_DEBUG
+
 #include "Fonts.h"
 #include "MAX7221.h"
 #include "Wire.h"
@@ -11,9 +14,6 @@
 #include <MqttBase.h>
 #include <pcf8574_esp.h>
 #include <vector>
-
-// define this to get serial debug messages
-#define SERIAL_DEBUG
 
 #if CONFIG_FREERTOS_UNICORE
 #define ARDUINO_RUNNING_CORE 0
@@ -46,6 +46,11 @@ tPuzzleState puzzleStateRewiring0 = UNSOLVED;
 tPuzzleState puzzleStateRewiring1 = UNSOLVED;
 tPuzzleState puzzleStatePotis = UNSOLVED;
 tPuzzleState puzzleStateLaserLock = UNSOLVED;
+
+bool potentiometerTaskDeleted = false;
+bool rewiring0TaskDeleted = false;
+bool rewiring1TaskDeleted = false;
+bool laserDetectionTaskDeleted = false;
 
 // 7 Segment
 MAX7221 seg1 = MAX7221(MAX7221_CS, 1, MAX7221::SEGMENT);
@@ -128,21 +133,25 @@ void setup() {
   xTaskCreatePinnedToCore(TaskControlPuzzleState, "TaskControlPuzzleState",
                           4096, NULL, 1, &xHandleControlPuzzleState, 0);
 
-  // Riddle Tasks
-  xTaskCreatePinnedToCore(TaskLaserLock, "TaskLaserLock", 2048, NULL, 2,
-                          &xHandleLedRing, 1);
-  xTaskCreatePinnedToCore(TaskPotentiometerReadout, "TaskPotentiometerReadout",
-                          2048, NULL, 2, &xHandlePotentiometerReadout, 1);
-  xTaskCreatePinnedToCore(TaskWiring0Readout, "TaskWiring0Readout", 2048, NULL,
-                          3, &xHandleWiring0Readout, 1);
-  xTaskCreatePinnedToCore(TaskWiring1Readout, "TaskWiring1Readout", 2048, NULL,
-                          3, &xHandleWiring1Readout, 1);
-
   // Mqtt Tasks
   xTaskCreatePinnedToCore(TaskMqttLoop, "TaskMqttLoop", 4096, NULL, 1,
                           &xHandleMqttLoop, 0);
   xTaskCreatePinnedToCore(TaskMqttPublish, "TaskMqttPublish", 4096, NULL, 2,
                           &xHandleMqttPublish, 0);
+
+  // Riddle Tasks
+
+  xTaskCreatePinnedToCore(TaskPotentiometerReadout, "TaskPotentiometerReadout",
+                          2048, NULL, 2, &xHandlePotentiometerReadout, 1);
+
+  xTaskCreatePinnedToCore(TaskWiring0Readout, "TaskWiring0Readout", 2048, NULL,
+                          3, &xHandleWiring0Readout, 1);
+  
+  xTaskCreatePinnedToCore(TaskWiring1Readout, "TaskWiring1Readout", 2048, NULL,
+                          3, &xHandleWiring1Readout, 1);
+
+  xTaskCreatePinnedToCore(TaskLaserLock, "TaskLaserLock", 2048, NULL, 2,
+                          &xHandleLedRing, 1);
 
   // Fake Riddle Tasks
   xTaskCreatePinnedToCore(TaskPiezoButtonReadout, "TaskPiezoButtonReadout",
@@ -275,6 +284,7 @@ void TaskLaserLock(void *pvParameters) {
   (void)pvParameters;
 
   for (;;) {
+    // SERIALPRINTS("TaskLaserLock: \t\t");
     static uint8_t byte_count = 0;
 
     sequence[byte_count] = digitalRead(detectorPin);
@@ -308,7 +318,7 @@ void TaskLaserLock(void *pvParameters) {
     // check if puzzle is solved
     if (numberOfSequences > MAX_SEQUENZES) {
       puzzleStateLaserLock = SOLVED;
-      SERIALPRINTS("Fuse Box open\n");
+      SERIALPRINTS("Fuse Box open \n");
       numberOfSequences = 0;
       blink_ring(5, 2);
 
@@ -335,6 +345,7 @@ void TaskLaserLock(void *pvParameters) {
       // old_time_in_ms = xTaskGetTickCount();
     }
     byte_count++;
+    // SERIALPRINTS(" not solved yet!\n");
     vTaskDelay(10);
   }
 }
@@ -424,6 +435,22 @@ uint8_t analyse_sequence(uint8_t sequence[6], uint8_t target) {
   return target_number + 1;
 }
 
+String getStateDecription(eTaskState state) {
+  if (state == eReady) {
+    return "eReady";
+  } else if (state == eRunning) {
+    return "eRunning";
+  } else if (state == eBlocked) {
+    return "eBlocked";
+  } else if (state == eSuspended) {
+    return "eSuspended";
+  } else if (state == eDeleted) {
+    return "eDeleted";
+  } else {
+    return "smth else";
+  }
+}
+
 void TaskControlPuzzleState(void *pvParameters) {
   (void)pvParameters;
   for (;;) {
@@ -433,32 +460,30 @@ void TaskControlPuzzleState(void *pvParameters) {
       ledm1.clear();
       ledm1.drawText(25, 7, "Solved!", MD_MAXPanel::ROT_180);
 
-      // Remove Solved Tasks
-      vTaskSuspend(xHandleWiring0Readout);
-      vTaskSuspend(xHandleWiring1Readout);
-      vTaskSuspend(xHandlePotentiometerReadout);
-      vTaskSuspend(xHandleLedRing);
-
     } else {
 
       ledm1.clear();
       if (puzzleStatePotis == SOLVED) {
         ledm1.drawCircle(4, 11, 2);
+        // vTaskSuspend(xHandlePotentiometerReadout);
       } else {
         ledm1.drawRectangle(4, 11, 6, 13);
       }
       if (puzzleStateRewiring0 == SOLVED) {
         ledm1.drawCircle(12, 11, 2);
+        // vTaskSuspend(xHandleWiring0Readout);
       } else {
         ledm1.drawRectangle(12, 11, 14, 13);
       }
       if (puzzleStateRewiring1 == SOLVED) {
         ledm1.drawCircle(20, 11, 2);
+        // vTaskSuspend(xHandleWiring1Readout);
       } else {
         ledm1.drawRectangle(20, 11, 22, 13);
       }
       if (puzzleStateLaserLock == SOLVED) {
         ledm1.drawCircle(28, 11, 2);
+        // vTaskSuspend(xHandleLedRing);
       } else {
         ledm1.drawRectangle(28, 11, 30, 13);
       }
@@ -564,14 +589,58 @@ void TaskMqttPublish(void *pvParameters) {
 }
 
 void callbackLaserDetection(const char *method1, const char *state, int daten) {
-  // Serial.println("+++++++");
+  vTaskSuspend(xHandleMqttPublish);
+  if (strcmp(state, "solved") == 0) {
+    puzzleStateLaserLock = SOLVED;
+    if (laserDetectionTaskDeleted != true) {
+      Serial.println("Delete Laser Detection Task!");
+      vTaskDelete(xHandleLedRing);
+      laserDetectionTaskDeleted = true;
+    }
+  } else if (strcmp(state, "unsolved") == 0) {
+    puzzleStateLaserLock = UNSOLVED;
+  }
+  vTaskResume(xHandleMqttPublish);
 }
 void callbackRewiring0(const char *method1, const char *state, int daten) {
-  // Serial.println("-------");
+  vTaskSuspend(xHandleMqttPublish);
+  if (strcmp(state, "solved") == 0) {
+    puzzleStateRewiring0 = SOLVED;
+    if (rewiring0TaskDeleted != true) {
+      Serial.println("Delete Rewiring 0 Task!");
+      vTaskDelete(xHandleWiring0Readout);
+      rewiring0TaskDeleted = true;
+    }
+  } else if (strcmp(state, "unsolved") == 0) {
+    puzzleStateRewiring0 = UNSOLVED;
+  }
+  vTaskResume(xHandleMqttPublish);
 }
 void callbackRewiring1(const char *method1, const char *state, int daten) {
-  // Serial.println("*******");
+  vTaskSuspend(xHandleMqttPublish);
+  if (strcmp(state, "solved") == 0) {
+    puzzleStateRewiring1 = SOLVED;
+    if (rewiring1TaskDeleted != true) {
+      Serial.println("Delete Rewiring 1 Task!");
+      vTaskDelete(xHandleWiring1Readout);
+      rewiring1TaskDeleted = true;
+    }
+  } else if (strcmp(state, "unsolved") == 0) {
+    puzzleStateRewiring1 = UNSOLVED;
+  }
+  vTaskResume(xHandleMqttPublish);
 }
 void callbackPotentiometer(const char *method1, const char *state, int daten) {
-  // Serial.println("///////");
+  vTaskSuspend(xHandleMqttPublish);
+  if (strcmp(state, "solved") == 0) {
+    puzzleStatePotis = SOLVED;
+    if (potentiometerTaskDeleted != true) {
+      Serial.println("Delete Poti Task!");
+      vTaskDelete(xHandlePotentiometerReadout);
+      potentiometerTaskDeleted = true;
+    }  
+  } else if (strcmp(state, "unsolved") == 0) {
+    puzzleStatePotis = UNSOLVED;
+  }
+  vTaskResume(xHandleMqttPublish);
 }
