@@ -1,13 +1,15 @@
 #include "Fonts.h"
 #include "MAX7221.h"
 #include "Wire.h"
+#include "wifi_secure.h"
 #include <Adafruit_ADS1015.h>
 #include <Adafruit_NeoPixel.h>
 #include <Arduino.h>
 #include <MD_MAX72xx.h>
 #include <MD_MAXPanel.h>
-#include <pcf8574_esp.h>
 #include <MqttBase.h>
+#include <pcf8574_esp.h>
+#include <vector>
 
 #if CONFIG_FREERTOS_UNICORE
 #define ARDUINO_RUNNING_CORE 0
@@ -35,9 +37,7 @@
 #define REWIRE_0_5 34
 
 // Puzzle States
-
 enum tPuzzleState { INACTIVE, ACTIVE, SOLVED, UNSOLVED };
-
 tPuzzleState puzzleStateRewiring0 = UNSOLVED;
 tPuzzleState puzzleStateRewiring1 = UNSOLVED;
 tPuzzleState puzzleStatePotis = UNSOLVED;
@@ -66,6 +66,13 @@ Adafruit_ADS1015 ads;
 PCF857x portExpander0(0x20, &Wire);
 PCF857x portExpander1(0x21, &Wire);
 
+// MQTT stuff
+MqttBase *mqttCommunication;
+void callbackLaserDetection(const char *method1, const char *state, int daten);
+void callbackRewiring0(const char *method1, const char *state, int daten);
+void callbackRewiring1(const char *method1, const char *state, int daten);
+void callbackPotentiometer(const char *method1, const char *state, int daten);
+
 // Task Attachment
 void TaskPotentiometerReadout(void *pvParameters);
 void TaskWiring0Readout(void *pvParameters);
@@ -74,6 +81,7 @@ void TaskPiezoButtonReadout(void *pvParameters);
 void TaskControlPuzzleState(void *pvParameters);
 void TaskLaserLock(void *pvParameters);
 void TaskControlButtonsReadout(void *pvParameters); // TODO: Implement
+void TaskMqttLoop(void *pvParameters);
 
 // Task Handles
 TaskHandle_t xHandleLedRing;
@@ -81,6 +89,7 @@ TaskHandle_t xHandleControlPuzzleState;
 TaskHandle_t xHandlePotentiometerReadout;
 TaskHandle_t xHandleWiring0Readout;
 TaskHandle_t xHandleWiring1Readout;
+TaskHandle_t xHandleMqttLoop;
 
 // Init Functions
 void initPotentiometers(void);
@@ -89,17 +98,17 @@ void initPortExpander(void);
 void initPiezoBuzzer(void);
 void initLedMatrix(void);
 void initSevenSegment(void);
+void initMqtt(void);
 
 void setup() {
-
-  // TODO: Implement MQTT Connection
-
-  // disableCore0WDT();
-  // disableCore1WDT();
 
   Serial.begin(115200);
   Serial.println("Setup started ...");
 
+  // disableCore0WDT();
+  // disableCore1WDT();
+
+  initMqtt();
   initPotentiometers();
   initPiezoBuzzer();
   initLedRing();
@@ -107,14 +116,11 @@ void setup() {
   initSevenSegment();
   initLedMatrix();
 
-  // Lock
-  pinMode(LOCK_0, OUTPUT);
-
   Serial.println("Setup finished");
 
   // Attach Tasks to Scheduler
   xTaskCreatePinnedToCore(TaskControlPuzzleState, "TaskControlPuzzleState",
-                          2048, NULL, 1, &xHandleControlPuzzleState, 0);
+                          2048, NULL, 1, &xHandleControlPuzzleState, 0);  
 
   // Riddle Tasks
   xTaskCreatePinnedToCore(TaskLaserLock, "TaskLaserLock", 2048, NULL, 2,
@@ -122,9 +128,13 @@ void setup() {
   xTaskCreatePinnedToCore(TaskPotentiometerReadout, "TaskPotentiometerReadout",
                           2048, NULL, 2, &xHandlePotentiometerReadout, 1);
   xTaskCreatePinnedToCore(TaskWiring0Readout, "TaskWiring0Readout", 2048, NULL,
-                          3, &xHandleWiring0Readout, 0);
+                          3, &xHandleWiring0Readout, 1);
   xTaskCreatePinnedToCore(TaskWiring1Readout, "TaskWiring1Readout", 2048, NULL,
-                          3, &xHandleWiring1Readout, 0);
+                          3, &xHandleWiring1Readout, 1);
+
+  // Mqtt Loop Task
+  xTaskCreatePinnedToCore(TaskMqttLoop, "TaskMqttLoop", 16384, NULL, 1,
+                          &xHandleMqttLoop, 0);
 
   // Fake Riddle Tasks
   xTaskCreatePinnedToCore(TaskPiezoButtonReadout, "TaskPiezoButtonReadout",
@@ -185,8 +195,33 @@ void initLedRing(void) {
         i, pixels.Color(255, 0, 0)); // Moderately bright green color.
     pixels.show(); // This sends the updated pixel color to the hardware.
   }
-
   pinMode(detectorPin, INPUT); // Laser Detector als Eingangssignal setzen
+  pinMode(LOCK_0, OUTPUT); // Lock als Ausgang setzen
+
+  Serial.println("done!");
+}
+
+void initMqtt(void) {
+  Serial.print("Setup MQTT ... ");
+
+  mqttCommunication = new MqttBase("10.0.0.2", "test187", 1883);
+
+  std::vector<std::shared_ptr<std::string>> mqttTopics;
+  mqttTopics.push_back(
+      std::make_shared<std::string>("7/fusebox/laserDetection"));
+  mqttTopics.push_back(std::make_shared<std::string>("7/fusebox/rewiring0"));
+  mqttTopics.push_back(std::make_shared<std::string>("7/fusebox/rewiring1"));
+  mqttTopics.push_back(
+      std::make_shared<std::string>("7/fusebox/potentiometer"));
+
+  std::vector<std::function<void(const char *, const char *, int)>>
+      logicCallbacks;
+  logicCallbacks.push_back(callbackLaserDetection);
+  logicCallbacks.push_back(callbackRewiring0);
+  logicCallbacks.push_back(callbackRewiring1);
+  logicCallbacks.push_back(callbackPotentiometer);
+
+  mqttCommunication->init(ssid, password, mqttTopics, logicCallbacks);
 
   Serial.println("done!");
 }
@@ -323,7 +358,7 @@ void TaskWiring0Readout(void *pvParameters) {
       puzzleStateRewiring0 = UNSOLVED;
     }
 
-    vTaskDelay(500);
+    vTaskDelay(2000);
   }
 }
 
@@ -344,7 +379,7 @@ void TaskWiring1Readout(void *pvParameters) {
       puzzleStateRewiring1 = UNSOLVED;
     }
 
-    vTaskDelay(500);
+    vTaskDelay(2000);
   }
 }
 
@@ -473,6 +508,27 @@ void TaskPiezoButtonReadout(void *pvParameters) {
       Serial.println("No Button pressed");
       ledcWriteTone(LEDC_CHANNEL1, 0);
     }
-    vTaskDelay(500);
+    vTaskDelay(1000);
   }
+}
+
+void TaskMqttLoop(void *pvParameters) {
+  (void)pvParameters;
+  for (;;) {
+    mqttCommunication->loop();
+    vTaskDelay(10);
+  }
+}
+
+void callbackLaserDetection(const char *method1, const char *state, int daten) {
+  Serial.println("+++++++");
+}
+void callbackRewiring0(const char *method1, const char *state, int daten) {
+  Serial.println("-------");
+}
+void callbackRewiring1(const char *method1, const char *state, int daten) {
+  Serial.println("*******");
+}
+void callbackPotentiometer(const char *method1, const char *state, int daten) {
+  Serial.println("///////");
 }
