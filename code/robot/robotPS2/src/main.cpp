@@ -7,9 +7,9 @@
  ******************************************************************/
 
 #include <Adafruit_NeoPixel.h>
-#include <SoftwareSerial.h> 
 #include <Arduino_FreeRTOS.h>
 #include <Robot.h>
+#include <SoftwareSerial.h>
 
 #define PS2_DAT 12
 #define PS2_CMD 11
@@ -40,7 +40,7 @@ Robot robot;
 
 Adafruit_NeoPixel pixels(NUMPIXELS, PIXEL_PIN, NEO_GRB + NEO_KHZ800);
 
-SoftwareSerial mySerial(2, 4); // RX, TX
+SoftwareSerial mySerial(2, 4);  // RX, TX
 
 /////////////////////////////////////
 // DO NOT USE millis with RTOS
@@ -76,6 +76,7 @@ void drive_forward(byte val) {
 }
 
 void setup() {
+  Serial.begin(115200);
   mySerial.begin(9600);
 
   pixels.begin();
@@ -181,9 +182,11 @@ void TaskBlink(void *pvParameters) {
   Color color = red;
 
   for (;;) {
-    Serial.println(color);
     color = robot.get_color();
     for (int i = 0; i < NUMPIXELS; i++) {
+      if(color = none){
+        pixels.setPixelColor(i, pixels.Color(0, 0, 0));
+      }
       if (color == red) {
         pixels.setPixelColor(i, pixels.Color(0, 255, 0));
       }
@@ -207,14 +210,26 @@ void TaskCheckESP(void *pvParameters) {
   (void)pvParameters;
 
   for (;;) {
+    char str[3];
+    if (mySerial.available()) {
+      vTaskDelay(50);  // allows all serial sent to be received together
+      mySerial.readBytes(str,3);
+      //mySerial.flush();
+      Serial.println(str);
+    }
+    /*
     if (mySerial.available()) {
       unsigned char income = mySerial.read();
+      Serial.print(income);
+      Serial.println("");
       if (income == 48) {
         robot.robotOn = true;
       } else {
         robot.robotOn = false;
       }
+      mySerial.flush();
     }
-    vTaskDelay(1000);  // one tick delay (15ms) in between reads for stability
+    */
+    vTaskDelay(50);  // one tick delay (15ms) in between reads for stability
   }
 }

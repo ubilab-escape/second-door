@@ -1,3 +1,6 @@
 [submodule "code/laser/lib/MqttBase"]
 	path = code/laser/lib/MqttBase
 	url = https://github.com/JayWiz/MqttBase.git
+[submodule "code/robot/robotESP/lib/MqttBase"]
+	path = code/robot/robotESP/lib/MqttBase
+	url = https://github.com/JayWiz/MqttBase.git
