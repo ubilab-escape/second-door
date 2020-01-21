@@ -1,4 +1,6 @@
+#include <Adafruit_NeoPixel.h>
 
+#include "src/LEDMATRIX/MD_MAX72xx.h"
 #include "src/MAX7221/MAX7221.h"
 
 #if CONFIG_FREERTOS_UNICORE
@@ -20,8 +22,6 @@
 #define BUTTON_0 16
 #define BUTTON_1 17
 
-#define LED_0 26 //2
-
 #define LEDC_CHANNEL1 0
 #define LEDC_RESOLUTION 8
 
@@ -35,25 +35,31 @@
 
 #define LED_RING 27
 
-//#define LASER_SENSE 26
-
 typedef enum tPuzzleState {INIT, SOLVED, NOT_SOLVED};
 
 tPuzzleState puzzleStateRewiring0;
 tPuzzleState puzzleStatePotis;
 
 
-MAX7221 max1 = MAX7221(MAX7221_CS, 4);
+MAX7221 seg1 = MAX7221(MAX7221_CS, 4);
 
 
-uint16_t evaluatePotentiometer(uint8_t p_poti);
-void setDisplay(uint16_t* p_displayData);
+// LED matrix definitions
+#define HARDWARE_TYPE MD_MAX72XX::FC16_HW
+#define MAX_DEVICES 8
+MD_MAX72XX ledm = MD_MAX72XX(HARDWARE_TYPE, MAX7219_CS, MAX_DEVICES);
+
+
+Adafruit_NeoPixel np(16, LED_RING, NEO_GRB + NEO_KHZ800);
+
 
 void TaskPotentiometerReadout(void *pvParameters);
 void TaskWiringReadout(void *pvParameters);
 void TaskPiezoButtonReadout(void *pvParameters);
 
 void TaskControlPuzzleState(void *pvParameters);
+
+void TaskRefreshLedMatrix(void *pvParameters);
 
 void setup() {
 
@@ -70,28 +76,37 @@ void setup() {
   pinMode(BUTTON_0, INPUT);
   pinMode(BUTTON_1, INPUT);
 
-  pinMode(LED_0, OUTPUT);
-
   // Init PWM Signals for Buzzers
   ledcSetup(LEDC_CHANNEL1, 2000, LEDC_RESOLUTION);
   ledcAttachPin(PIEZO_0, LEDC_CHANNEL1);
 
   // Init MAX7221 on SPI Bus
-  max1.initMAX();
+  seg1.initMAX();
+
+  // Init LED matrix
+  ledm.begin();
+  ledm.clear();
+  
+  // Init LED ring
+  np.begin();
+
 
   Serial.println("Setup finished");
 
   // Attach Tasks
-  xTaskCreatePinnedToCore(TaskControlPuzzleState, "TaskControlPuzzleState", 1024, NULL, 1, NULL, 0);
-  xTaskCreatePinnedToCore(TaskPotentiometerReadout, "TaskPotentiometerReadout", 1024, NULL, 2, NULL, ARDUINO_RUNNING_CORE);
-  xTaskCreatePinnedToCore(TaskWiringReadout, "TaskWiringReadout", 1024, NULL, 2, NULL, ARDUINO_RUNNING_CORE);
-  xTaskCreatePinnedToCore(TaskPiezoButtonReadout, "TaskPiezoButtonReadout", 1024, NULL, 2, NULL, ARDUINO_RUNNING_CORE);
+  xTaskCreatePinnedToCore(TaskControlPuzzleState, "TaskControlPuzzleState", 16000, NULL, 1, NULL, 0);
+  xTaskCreatePinnedToCore(TaskPotentiometerReadout, "TaskPotentiometerReadout", 16000, NULL, 2, NULL, 0);
+  xTaskCreatePinnedToCore(TaskWiringReadout, "TaskWiringReadout", 16000, NULL, 3, NULL, 0);
+  xTaskCreatePinnedToCore(TaskPiezoButtonReadout, "TaskPiezoButtonReadout", 16000, NULL, 4, NULL, 0);
+  xTaskCreatePinnedToCore(TaskRefreshLedMatrix, "TaskRefreshLedMatrix", 16000, NULL, 5, NULL, 0);
+
   
 
 }
 
 void loop() {
   // no code here!
+  
   
 }
 
@@ -101,16 +116,23 @@ void TaskPotentiometerReadout(void *pvParameters) {
     uint16_t pValues[4];
     uint8_t potis[] = {POTI_0, POTI_1, POTI_2, POTI_3};
     for (int i = 0; i <= 3; i++) {
-      pValues[i] = evaluatePotentiometer(potis[i], 0, 4095, 0, 9);
-      Serial.print("Poti ");
-      Serial.print(i);
-      Serial.print(": ");
-      Serial.println(pValues[i]);
-    }
-    max1.transferData(0x01, pValues[2]);
-    max1.transferData(0x02, pValues[3]);
 
-    if (pValues[0] == 4 && pValues[1] == 3 && pValues[2] == 2 && pValues[3] == 1) {
+      uint16_t value;
+      value = analogRead(potis[i]);
+      value = map(value, 0, 4095, 0, 9);
+      pValues[i] = value;
+
+      // Serial.print("Poti ");
+      // Serial.print(i);
+      // Serial.print(": ");
+      // Serial.println(pValues[i]);
+    }
+    seg1.transferData(0x01, pValues[0]);
+    seg1.transferData(0x02, pValues[1]);
+    seg1.transferData(0x03, pValues[2]);
+    seg1.transferData(0x04, pValues[3]);
+
+    if (pValues[0] == 1 && pValues[1] == 2 && pValues[2] == 3 && pValues[3] == 4) {
       Serial.println("Potis Solved!"); 
       puzzleStatePotis = SOLVED;
     } else {
@@ -131,11 +153,10 @@ void TaskWiringReadout(void *pvParameters) {
     for (int i = 0; i <=4; i++) {
       rewiringValues0[i] = analogRead(rewiringPins0[i]);
       rewiringValues0[i] = map(rewiringValues0[i], 0, 4095, 0, 33);
-      // Serial.print("Pin " + String(i) + " : ");
-      Serial.print("Rewiring 0_");
-      Serial.print(i);
-      Serial.print(": ");
-      Serial.println(rewiringValues0[i]);
+      // Serial.print("Rewiring 0_");
+      // Serial.print(i);
+      // Serial.print(": ");
+      // Serial.println(rewiringValues0[i]);
     }
 
     if (rewiringValues0[0] == 25 && rewiringValues0[1] == 18 && rewiringValues0[2] == 11 && rewiringValues0[3] == 33 && rewiringValues0[4] == 5) {
@@ -153,14 +174,34 @@ void TaskWiringReadout(void *pvParameters) {
 void TaskControlPuzzleState(void *pvParameters) {
   (void) pvParameters;
   for(;;) {
-    Serial.println("hey");
+
+    // TODO: remove DEBUG purpose
+    puzzleStateRewiring0 = SOLVED;
+    // ledm.clear();
+
     if (puzzleStatePotis == SOLVED && puzzleStateRewiring0 == SOLVED) {
       Serial.println("All Puzzles Solved");
-      digitalWrite(LED_0, HIGH);
+      ledm.setRow(0, 0, 0, 0b11100000);
+      ledm.setRow(0, 0, 1, 0b10100000);
+      ledm.setRow(0, 0, 2, 0b11100000);
     } else {
-      digitalWrite(LED_0, LOW);
+      Serial.println("Not all Puzzles Solved!");
+      ledm.setRow(0, 0, 0, 0b10100000);
+      ledm.setRow(0, 0, 1, 0b01000000);
+      ledm.setRow(0, 0, 2, 0b10100000);
     }
-    vTaskDelay(500);
+    
+    vTaskDelay(1000);
+  }
+}
+
+void TaskRefreshLedMatrix(void *pvParameters) {
+  // define 10s delay
+  const TickType_t xDelay = 10000 / portTICK_PERIOD_MS;
+  for(;;) {
+    ledm.clear();
+    Serial.println("Display cleared!");
+    vTaskDelay(1000);
   }
 }
 
@@ -191,11 +232,4 @@ void TaskPiezoButtonReadout(void *pvParameters) {
       ledcWriteTone(LEDC_CHANNEL1, 0);
     }
   }
-}
-
-uint16_t evaluatePotentiometer(uint8_t p_poti, uint16_t in_min, uint16_t in_max, uint16_t out_min, uint16_t out_max) {
-  uint16_t value;
-  value = analogRead(p_poti);
-  value = map(value, in_min, in_max, out_min, out_max);
-  return value;
 }
