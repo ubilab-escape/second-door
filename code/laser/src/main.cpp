@@ -27,9 +27,7 @@ Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUM_PIXEL, RGB_RING_PIN, NEO_GRB + 
 MqttBase* mqtt_com;
 
 void callback(const char* method1, const char* state, int daten) {
-  Serial.println("LOGIC CALLBACK");
   if (strcmp(method1, "TRIGGER") == 0) {
-    Serial.println("HUI");
     if (strcmp(state, "ON") == 0) {
       // configure LED PWM functionalitites
       ledcSetup(ledChannel, freq, resolution);
@@ -83,6 +81,6 @@ void setup() {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 void loop() {
   mqtt_com->loop();
-  delay(2000);
+  delay(100);
   // mqtt_com->publish("STATUS", "solved");
 }
