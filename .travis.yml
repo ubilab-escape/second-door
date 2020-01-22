@@ -23,6 +23,9 @@
 #
 # Template #1: General project. Test it using existing `platformio.ini`.
 #
+git:
+    submodules: false
+
 
 before-install:
     - cd code/fusebox/design_software
