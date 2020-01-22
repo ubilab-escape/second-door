@@ -1,3 +1,6 @@
+// define this to get serial debug messages
+#define SERIAL_DEBUG
+
 #include "Fonts.h"
 #include "MAX7221.h"
 #include "Wire.h"
@@ -11,9 +14,6 @@
 #include <MqttBase.h>
 #include <pcf8574_esp.h>
 #include <vector>
-
-// define this to get serial debug messages
-#define SERIAL_DEBUG
 
 #if CONFIG_FREERTOS_UNICORE
 #define ARDUINO_RUNNING_CORE 0
@@ -46,6 +46,11 @@ tPuzzleState puzzleStateRewiring0 = UNSOLVED;
 tPuzzleState puzzleStateRewiring1 = UNSOLVED;
 tPuzzleState puzzleStatePotis = UNSOLVED;
 tPuzzleState puzzleStateLaserLock = UNSOLVED;
+
+bool initTaskRewiring0 = false;
+bool initTaskRewiring1 = false;
+bool initTaskPotentiometer = false;
+bool initTaskLaserDetection = false;
 
 // 7 Segment
 MAX7221 seg1 = MAX7221(MAX7221_CS, 1, MAX7221::SEGMENT);
@@ -97,6 +102,11 @@ TaskHandle_t xHandleWiring1Readout;
 TaskHandle_t xHandleMqttLoop;
 TaskHandle_t xHandleMqttPublish;
 
+// Delays
+TickType_t xDelay1000ms = pdMS_TO_TICKS(1000);
+TickType_t xDelay2000ms = pdMS_TO_TICKS(2000);
+
+
 // Init Functions
 void initPotentiometers(void);
 void initLedRing(void);
@@ -115,6 +125,7 @@ void setup() {
   // disableCore1WDT();
 
   initMqtt();
+  vTaskDelay(1000);
   initPotentiometers();
   initPiezoBuzzer();
   initLedRing();
@@ -124,29 +135,19 @@ void setup() {
 
   Serial.println("Setup finished");
 
-  // Attach Tasks to Scheduler
+  // Attach Control Task
   xTaskCreatePinnedToCore(TaskControlPuzzleState, "TaskControlPuzzleState",
-                          4096, NULL, 1, &xHandleControlPuzzleState, 0);
-
-  // Riddle Tasks
-  xTaskCreatePinnedToCore(TaskLaserLock, "TaskLaserLock", 2048, NULL, 2,
-                          &xHandleLedRing, 1);
-  xTaskCreatePinnedToCore(TaskPotentiometerReadout, "TaskPotentiometerReadout",
-                          2048, NULL, 2, &xHandlePotentiometerReadout, 1);
-  xTaskCreatePinnedToCore(TaskWiring0Readout, "TaskWiring0Readout", 2048, NULL,
-                          3, &xHandleWiring0Readout, 1);
-  xTaskCreatePinnedToCore(TaskWiring1Readout, "TaskWiring1Readout", 2048, NULL,
-                          3, &xHandleWiring1Readout, 1);
+                          8192, NULL, 3, &xHandleControlPuzzleState, 0);
 
   // Mqtt Tasks
-  xTaskCreatePinnedToCore(TaskMqttLoop, "TaskMqttLoop", 4096, NULL, 1,
+  xTaskCreatePinnedToCore(TaskMqttLoop, "TaskMqttLoop", 8192, NULL, 1,
                           &xHandleMqttLoop, 0);
-  xTaskCreatePinnedToCore(TaskMqttPublish, "TaskMqttPublish", 4096, NULL, 2,
+  xTaskCreatePinnedToCore(TaskMqttPublish, "TaskMqttPublish", 8192, NULL, 2,
                           &xHandleMqttPublish, 0);
 
   // Fake Riddle Tasks
   xTaskCreatePinnedToCore(TaskPiezoButtonReadout, "TaskPiezoButtonReadout",
-                          2048, NULL, 2, NULL, 1);
+                          4096, NULL, 5, NULL, 1);
 }
 
 void loop() {
@@ -164,6 +165,10 @@ void initLedMatrix(void) {
 void initSevenSegment(void) {
   Serial.print("Setup Seven Segment Display ... ");
   seg1.initMAX();
+  seg1.transferData(0x01, 1);
+  seg1.transferData(0x02, 9);
+  seg1.transferData(0x03, 9);
+  seg1.transferData(0x04, 5);
   Serial.println("done!");
 }
 
@@ -434,10 +439,10 @@ void TaskControlPuzzleState(void *pvParameters) {
       ledm1.drawText(25, 7, "Solved!", MD_MAXPanel::ROT_180);
 
       // Remove Solved Tasks
-      vTaskSuspend(xHandleWiring0Readout);
-      vTaskSuspend(xHandleWiring1Readout);
-      vTaskSuspend(xHandlePotentiometerReadout);
-      vTaskSuspend(xHandleLedRing);
+      // vTaskSuspend(xHandleWiring0Readout);
+      // vTaskSuspend(xHandleWiring1Readout);
+      // vTaskSuspend(xHandlePotentiometerReadout);
+      // vTaskSuspend(xHandleLedRing);
 
     } else {
 
@@ -535,7 +540,7 @@ void TaskMqttPublish(void *pvParameters) {
       mqttCommunication->publish("7/fusebox/potentiometer", "STATUS",
                                  "unsolved", false);
     }
-    vTaskDelay(1000);
+    vTaskDelay(xDelay2000ms);     // TODO: Check
     if (puzzleStateRewiring0 == SOLVED) {
       mqttCommunication->publish("7/fusebox/rewiring0", "STATUS", "solved",
                                  true);
@@ -543,7 +548,7 @@ void TaskMqttPublish(void *pvParameters) {
       mqttCommunication->publish("7/fusebox/rewiring0", "STATUS", "unsolved",
                                  false);
     }
-    vTaskDelay(1000);
+    vTaskDelay(xDelay2000ms);
     if (puzzleStateRewiring1 == SOLVED) {
       mqttCommunication->publish("7/fusebox/rewiring1", "STATUS", "solved",
                                  true);
@@ -551,7 +556,7 @@ void TaskMqttPublish(void *pvParameters) {
       mqttCommunication->publish("7/fusebox/rewiring1", "STATUS", "unsolved",
                                  false);
     }
-    vTaskDelay(1000);
+    vTaskDelay(xDelay2000ms);
     if (puzzleStateLaserLock == SOLVED) {
       mqttCommunication->publish("7/fusebox/laserDetection", "STATUS", "solved",
                                  true);
@@ -559,19 +564,68 @@ void TaskMqttPublish(void *pvParameters) {
       mqttCommunication->publish("7/fusebox/laserDetection", "STATUS",
                                  "unsolved", false);
     }
-    vTaskDelay(1000);
+    vTaskDelay(xDelay2000ms);
   }
 }
 
 void callbackLaserDetection(const char *method1, const char *state, int daten) {
-  // Serial.println("+++++++");
+  vTaskSuspend(xHandleMqttPublish);
+  if (initTaskLaserDetection == false) {
+    initTaskLaserDetection = true;
+    if (strcmp(state, "solved") == 0) {
+      SERIALPRINTS("Laser Detection was solved!\n");
+    } else if (strcmp(state, "unsolved") == 0) {
+      SERIALPRINTS("Laser Detection was not solved!\n");
+      xTaskCreatePinnedToCore(TaskLaserLock, "TaskLaserLock", 8192, NULL, 3,
+                              &xHandleLedRing, 1);
+    }
+  }
+  vTaskResume(xHandleMqttPublish);
 }
+
 void callbackRewiring0(const char *method1, const char *state, int daten) {
-  // Serial.println("-------");
+  vTaskSuspend(xHandleMqttPublish);
+  if (initTaskRewiring0 == false) {
+    initTaskRewiring0 = true;
+    if (strcmp(state, "solved") == 0) {
+      SERIALPRINTS("Rewiring 0 was solved!\n");
+    } else if (strcmp(state, "unsolved") == 0) {
+      SERIALPRINTS("Rewiring 0 was unsolved!\n");
+      xTaskCreatePinnedToCore(TaskWiring0Readout, "TaskWiring0Readout", 8192,
+                              NULL, 3, &xHandleWiring0Readout, 1);
+    }
+  }
+  vTaskResume(xHandleMqttPublish);
 }
+
 void callbackRewiring1(const char *method1, const char *state, int daten) {
-  // Serial.println("*******");
+  vTaskSuspend(xHandleMqttPublish);
+  if (initTaskRewiring1 == false) {
+    initTaskRewiring1 = true;
+    if (strcmp(state, "solved") == 0) {
+      SERIALPRINTS("Rewiring 1 was solved!\n");
+    } else if (strcmp(state, "unsolved") == 0) {
+      SERIALPRINTS("Rewiring 1 was unsolved!\n");
+      xTaskCreatePinnedToCore(TaskWiring1Readout, "TaskWiring1Readout", 8192,
+                              NULL, 3, &xHandleWiring1Readout, 1);
+    }
+  }
+  vTaskResume(xHandleMqttPublish);
 }
+
 void callbackPotentiometer(const char *method1, const char *state, int daten) {
-  // Serial.println("///////");
+  vTaskSuspend(xHandleMqttPublish);
+  if (initTaskPotentiometer == false) {
+    initTaskPotentiometer = true;
+    if (strcmp(state, "solved") == 0) {
+      SERIALPRINTS("Potentiometer was solved!\n");
+      puzzleStatePotis = SOLVED;
+    } else if (strcmp(state, "unsolved") == 0) {
+      SERIALPRINTS("Potentiometer was unsolved!\n");
+      xTaskCreatePinnedToCore(TaskPotentiometerReadout,
+                              "TaskPotentiometerReadout", 8192, NULL, 3,
+                              &xHandlePotentiometerReadout, 1);
+    }
+  }
+  vTaskResume(xHandleMqttPublish);
 }
