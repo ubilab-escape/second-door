@@ -1,4 +1,7 @@
 # second-door
+
+[![Build Status](https://travis-ci.com/ubilab-escape/second-door.svg?branch=master)](https://travis-ci.com/ubilab-escape/second-door)
+
 The main concept is visualized in the figure below.
 
 <p align="center"> 

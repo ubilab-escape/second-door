@@ -40,8 +40,6 @@ void MAX7221::transferData(uint8_t device, uint8_t address, uint8_t value) {
 
 void MAX7221::initMAX() {
 
-  Serial.print("MAX Init started ...");
-
   pinMode(cs_pin_, OUTPUT);
 
   SPI.setBitOrder(MSBFIRST);
@@ -85,5 +83,4 @@ void MAX7221::initMAX() {
   // enter normal operation mode
   transferData(0x0C, 0x01); // Normal Operation
 
-  Serial.println(" done!");
 }
