@@ -540,7 +540,7 @@ void TaskMqttPublish(void *pvParameters) {
       mqttCommunication->publish("7/fusebox/potentiometer", "STATUS",
                                  "unsolved", false);
     }
-    vTaskDelay(xDelay2000ms);     // TODO: Check
+    vTaskDelay(500);vTaskDelay(500);vTaskDelay(500);vTaskDelay(500);
     if (puzzleStateRewiring0 == SOLVED) {
       mqttCommunication->publish("7/fusebox/rewiring0", "STATUS", "solved",
                                  true);
@@ -548,7 +548,7 @@ void TaskMqttPublish(void *pvParameters) {
       mqttCommunication->publish("7/fusebox/rewiring0", "STATUS", "unsolved",
                                  false);
     }
-    vTaskDelay(xDelay2000ms);
+    vTaskDelay(500);vTaskDelay(500);vTaskDelay(500);vTaskDelay(500);
     if (puzzleStateRewiring1 == SOLVED) {
       mqttCommunication->publish("7/fusebox/rewiring1", "STATUS", "solved",
                                  true);
@@ -556,7 +556,7 @@ void TaskMqttPublish(void *pvParameters) {
       mqttCommunication->publish("7/fusebox/rewiring1", "STATUS", "unsolved",
                                  false);
     }
-    vTaskDelay(xDelay2000ms);
+    vTaskDelay(500);vTaskDelay(500);vTaskDelay(500);vTaskDelay(500);
     if (puzzleStateLaserLock == SOLVED) {
       mqttCommunication->publish("7/fusebox/laserDetection", "STATUS", "solved",
                                  true);
@@ -564,7 +564,7 @@ void TaskMqttPublish(void *pvParameters) {
       mqttCommunication->publish("7/fusebox/laserDetection", "STATUS",
                                  "unsolved", false);
     }
-    vTaskDelay(xDelay2000ms);
+    vTaskDelay(500);vTaskDelay(500);vTaskDelay(500);vTaskDelay(500);
   }
 }
 
