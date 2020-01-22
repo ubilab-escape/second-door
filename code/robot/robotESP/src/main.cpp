@@ -6,8 +6,7 @@
 #include <vector>
 #include "wifi_secure.h"
 
-#define RXD2 16
-#define TXD2 17
+#define ROBOT_ON 18 
 
 std::string topic = "7/robot";
 const char *mqtt_server = "10.0.0.2";
@@ -32,7 +31,8 @@ void callback(const char *method1, const char *state, int daten) {
 
 void setup() {
   Serial.begin(115200);
-  Serial2.begin(9600, SERIAL_8N1, RXD2, TXD2);
+
+  pinMode(ROBOT_ON, OUTPUT);
 
   xTaskCreate(TaskTalk2Robot, "Talk2Robot", 1024, NULL, 2, NULL);
 
@@ -55,14 +55,10 @@ void TaskTalk2Robot(void *pvParameters) {
 
   for (;;) {
     if (robot_on == true) {
-      const char* str = "onn";
-      Serial2.write(str);
-      Serial.println("ROBOT ON");
+      digitalWrite(ROBOT_ON, HIGH);
     }
     if (robot_on == false) {
-      const char* str = "off";
-      Serial2.write(str);
-      Serial.println("ROBOT OFF");
+      digitalWrite(ROBOT_ON, LOW);
     }
     vTaskDelay(500);
   }

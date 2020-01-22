@@ -54,9 +54,6 @@ void Robot::controll() {
       color = blue;
     }
   }
-  if(robotOn == false){
-    color = none;
-  }
 }
 
 void Robot::stop_motors() {

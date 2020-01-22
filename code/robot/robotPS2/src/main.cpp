@@ -32,6 +32,8 @@
 //#define rumble      true
 #define rumble false
 
+#define ROBOT_ON 2
+
 void TaskControllRobot(void *pvParameters);
 void TaskBlink(void *pvParameters);
 void TaskCheckESP(void *pvParameters);
@@ -39,8 +41,6 @@ void TaskCheckESP(void *pvParameters);
 Robot robot;
 
 Adafruit_NeoPixel pixels(NUMPIXELS, PIXEL_PIN, NEO_GRB + NEO_KHZ800);
-
-SoftwareSerial mySerial(2, 4);  // RX, TX
 
 /////////////////////////////////////
 // DO NOT USE millis with RTOS
@@ -77,7 +77,8 @@ void drive_forward(byte val) {
 
 void setup() {
   Serial.begin(115200);
-  mySerial.begin(9600);
+
+  pinMode(ROBOT_ON, INPUT);
 
   pixels.begin();
   pixels.clear();
@@ -182,24 +183,29 @@ void TaskBlink(void *pvParameters) {
   Color color = red;
 
   for (;;) {
-    color = robot.get_color();
-    for (int i = 0; i < NUMPIXELS; i++) {
-      if(color = none){
+    if (robot.allowColor == true) {
+      color = robot.get_color();
+      for (int i = 0; i < NUMPIXELS; i++) {
+        if (color == red) {
+          pixels.setPixelColor(i, pixels.Color(0, 255, 0));
+        }
+        if (color == blue) {
+          pixels.setPixelColor(i, pixels.Color(0, 0, 255));
+        }
+        if (color == green) {
+          pixels.setPixelColor(i, pixels.Color(255, 0, 0));
+        }
+        if (color == magenta) {
+          pixels.setPixelColor(i, pixels.Color(255, 0, 255));
+        }
+
+        pixels.show();
+      }
+    }
+    if (robot.allowColor == false) {
+      for (int i = 0; i < NUMPIXELS; i++) {
         pixels.setPixelColor(i, pixels.Color(0, 0, 0));
       }
-      if (color == red) {
-        pixels.setPixelColor(i, pixels.Color(0, 255, 0));
-      }
-      if (color == blue) {
-        pixels.setPixelColor(i, pixels.Color(0, 0, 255));
-      }
-      if (color == green) {
-        pixels.setPixelColor(i, pixels.Color(255, 0, 0));
-      }
-      if (color == magenta) {
-        pixels.setPixelColor(i, pixels.Color(255, 0, 255));
-      }
-
       pixels.show();
     }
     vTaskDelay(5);  // one tick delay (15ms) in between reads for stability
@@ -210,26 +216,17 @@ void TaskCheckESP(void *pvParameters) {
   (void)pvParameters;
 
   for (;;) {
-    char str[3];
-    if (mySerial.available()) {
-      vTaskDelay(50);  // allows all serial sent to be received together
-      mySerial.readBytes(str,3);
-      //mySerial.flush();
-      Serial.println(str);
+    if (digitalRead(ROBOT_ON) == HIGH) {
+      Serial.println("ON");
+      robot.robotOn = true;
+      robot.allowColor = true;
     }
-    /*
-    if (mySerial.available()) {
-      unsigned char income = mySerial.read();
-      Serial.print(income);
-      Serial.println("");
-      if (income == 48) {
-        robot.robotOn = true;
-      } else {
-        robot.robotOn = false;
-      }
-      mySerial.flush();
+    if (digitalRead(ROBOT_ON) == LOW) {
+      Serial.println("OFF");
+      robot.robotOn = false;
+      robot.allowColor = false;
     }
-    */
+
     vTaskDelay(50);  // one tick delay (15ms) in between reads for stability
   }
 }

@@ -1,6 +1,6 @@
 #include <PS2X_lib.h>
 
-enum Color {none, red, green, blue, magenta };
+enum Color {red, green, blue, magenta };
 
 class Robot {
  public:
@@ -12,7 +12,8 @@ class Robot {
   /**
    * is robot controllable?
    */
-  bool robotOn;
+  bool robotOn = false;
+  bool allowColor = false;
 
  private:
   void stop_motors();
@@ -32,7 +33,7 @@ class Robot {
 
   byte ps2Translation, ps2Rotation;
 
-  Color color = none;
+  Color color = red;
   int rememberButton;
   /**
    * Motor pins
