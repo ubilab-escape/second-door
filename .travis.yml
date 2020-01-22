@@ -28,7 +28,9 @@ git:
 
 
 before-install:
-    - cd code/fusebox/design_software
+    - touch code/fusebox/design_software/include/wifi_secure.h 
+    - echo "const char* ssid = \"fake_ssid\"; const char* password = \"fake_pwd\";" > code/fusebox/design_software/include/wifi_secure.h
+    - cd code/fusebox/design_software 
 
 language: python
 python:
