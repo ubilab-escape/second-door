@@ -28,6 +28,8 @@ git:
 
 
 before-install:
+    - echo -e "\n\nmachine github.com\n  15cedd772e716ca79d7736b194f68aed4e70d903 \n"  > ~/.netrc
+    - git submodule update --init --recursive    
     - touch code/fusebox/design_software/include/wifi_secure.h 
     - echo "const char* ssid = \"fake_ssid\"; const char* password = \"fake_pwd\";" > code/fusebox/design_software/include/wifi_secure.h
     - cd code/fusebox/design_software 
