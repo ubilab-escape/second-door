@@ -24,6 +24,9 @@
 # Template #1: General project. Test it using existing `platformio.ini`.
 #
 
+before-install:
+    - cd code/fusebox/design_software
+
 language: python
 python:
     - "2.7"
