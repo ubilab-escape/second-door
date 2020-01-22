@@ -2,7 +2,7 @@
 
 #include <Adafruit_NeoPixel.h>
 #include "wifi_secure.h"
-
+#define DEBUG
 #include <vector>
 #include "MqttBase.h"
 
@@ -76,6 +76,7 @@ void setup() {
   ledcSetup(ledChannel, freq, resolution);
   // attach the channel to the GPIO2 to be controlled
   ledcAttachPin(LASER_PIN, ledChannel);
+  ledcWrite(ledChannel, 512);
   
 
   //setup RGB
