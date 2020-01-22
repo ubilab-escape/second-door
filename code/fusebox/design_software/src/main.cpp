@@ -574,6 +574,7 @@ void callbackLaserDetection(const char *method1, const char *state, int daten) {
     initTaskLaserDetection = true;
     if (strcmp(state, "solved") == 0) {
       SERIALPRINTS("Laser Detection was solved!\n");
+      puzzleStateLaserLock = SOLVED;
     } else if (strcmp(state, "unsolved") == 0) {
       SERIALPRINTS("Laser Detection was not solved!\n");
       xTaskCreatePinnedToCore(TaskLaserLock, "TaskLaserLock", 8192, NULL, 3,
@@ -589,6 +590,7 @@ void callbackRewiring0(const char *method1, const char *state, int daten) {
     initTaskRewiring0 = true;
     if (strcmp(state, "solved") == 0) {
       SERIALPRINTS("Rewiring 0 was solved!\n");
+      puzzleStateRewiring0 = SOLVED;
     } else if (strcmp(state, "unsolved") == 0) {
       SERIALPRINTS("Rewiring 0 was unsolved!\n");
       xTaskCreatePinnedToCore(TaskWiring0Readout, "TaskWiring0Readout", 8192,
@@ -604,6 +606,7 @@ void callbackRewiring1(const char *method1, const char *state, int daten) {
     initTaskRewiring1 = true;
     if (strcmp(state, "solved") == 0) {
       SERIALPRINTS("Rewiring 1 was solved!\n");
+      puzzleStateRewiring1 = SOLVED;
     } else if (strcmp(state, "unsolved") == 0) {
       SERIALPRINTS("Rewiring 1 was unsolved!\n");
       xTaskCreatePinnedToCore(TaskWiring1Readout, "TaskWiring1Readout", 8192,

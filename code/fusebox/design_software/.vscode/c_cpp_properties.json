@@ -8,6 +8,8 @@
             "includePath": [
                 "/home/jay/Documents/Dev/integration/second-door/code/fusebox/design_software/include",
                 "/home/jay/Documents/Dev/integration/second-door/code/fusebox/design_software/src",
+                "/home/jay/Documents/Dev/integration/second-door/code/fusebox/design_software/lib/MqttBase",
+                "/home/jay/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src",
                 "/home/jay/.platformio/lib/PubSubClient_ID89/src",
                 "/home/jay/.platformio/lib/ArduinoJson_ID64/src",
                 "/home/jay/.platformio/lib/PCF8574_ESP_ID1659",
@@ -75,7 +77,6 @@
                 "/home/jay/.platformio/packages/framework-arduinoespressif32/tools/sdk/include/fb_gfx",
                 "/home/jay/.platformio/packages/framework-arduinoespressif32/cores/esp32",
                 "/home/jay/.platformio/packages/framework-arduinoespressif32/variants/esp32",
-                "/home/jay/Documents/Dev/integration/second-door/code/fusebox/design_software/lib/MqttBase",
                 "/home/jay/.platformio/lib/Adafruit TCS34725_ID665",
                 "/home/jay/.platformio/lib/FreeRTOS_ID507/src",
                 "/home/jay/.platformio/lib/MD_Parola_ID1389/src",
@@ -102,7 +103,6 @@
                 "/home/jay/.platformio/packages/framework-arduinoespressif32/libraries/Ticker/src",
                 "/home/jay/.platformio/packages/framework-arduinoespressif32/libraries/Update/src",
                 "/home/jay/.platformio/packages/framework-arduinoespressif32/libraries/WebServer/src",
-                "/home/jay/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src",
                 "/home/jay/.platformio/packages/framework-arduinoespressif32/libraries/WiFiClientSecure/src",
                 "/home/jay/.platformio/packages/tool-unity",
                 ""
@@ -112,6 +112,8 @@
                 "path": [
                     "/home/jay/Documents/Dev/integration/second-door/code/fusebox/design_software/include",
                     "/home/jay/Documents/Dev/integration/second-door/code/fusebox/design_software/src",
+                    "/home/jay/Documents/Dev/integration/second-door/code/fusebox/design_software/lib/MqttBase",
+                    "/home/jay/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src",
                     "/home/jay/.platformio/lib/PubSubClient_ID89/src",
                     "/home/jay/.platformio/lib/ArduinoJson_ID64/src",
                     "/home/jay/.platformio/lib/PCF8574_ESP_ID1659",
@@ -179,7 +181,6 @@
                     "/home/jay/.platformio/packages/framework-arduinoespressif32/tools/sdk/include/fb_gfx",
                     "/home/jay/.platformio/packages/framework-arduinoespressif32/cores/esp32",
                     "/home/jay/.platformio/packages/framework-arduinoespressif32/variants/esp32",
-                    "/home/jay/Documents/Dev/integration/second-door/code/fusebox/design_software/lib/MqttBase",
                     "/home/jay/.platformio/lib/Adafruit TCS34725_ID665",
                     "/home/jay/.platformio/lib/FreeRTOS_ID507/src",
                     "/home/jay/.platformio/lib/MD_Parola_ID1389/src",
@@ -206,7 +207,6 @@
                     "/home/jay/.platformio/packages/framework-arduinoespressif32/libraries/Ticker/src",
                     "/home/jay/.platformio/packages/framework-arduinoespressif32/libraries/Update/src",
                     "/home/jay/.platformio/packages/framework-arduinoespressif32/libraries/WebServer/src",
-                    "/home/jay/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src",
                     "/home/jay/.platformio/packages/framework-arduinoespressif32/libraries/WiFiClientSecure/src",
                     "/home/jay/.platformio/packages/tool-unity",
                     ""
