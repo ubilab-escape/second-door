@@ -9,7 +9,6 @@
 #include <Adafruit_NeoPixel.h>
 #include <Arduino_FreeRTOS.h>
 #include <Robot.h>
-#include <SoftwareSerial.h>
 
 #define PS2_DAT 12
 #define PS2_CMD 11

@@ -26,6 +26,7 @@ env:
     - TEST_DIR=code/laser
     - TEST_DIR=code/push_button
     - TEST_DIR=code/robot/robotESP
+    - TEST_DIR=code/robot/robotPS2
 
 language: python
 python:
