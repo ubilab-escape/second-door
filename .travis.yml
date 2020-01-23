@@ -16,10 +16,16 @@ before-install:
     - echo "const char* ssid = \"fake_ssid\"; const char* password = \"fake_pwd\";" > code/fusebox/design_software/include/wifi_secure.h
     - touch code/laser/include/wifi_secure.h
     - echo "const char* ssid = \"fake_ssid\"; const char* password = \"fake_pwd\";" > code/laser/include/wifi_secure.h
-
+    - touch code/push_button/include/wifi_secure.h
+    - echo "const char* ssid = \"fake_ssid\"; const char* password = \"fake_pwd\";" > code/push_button/include/wifi_secure.h
+    - touch code/robot/robotESP/include/wifi_secure.h
+    - echo "const char* ssid = \"fake_ssid\"; const char* password = \"fake_pwd\";" > code/robot/robotESP/include/wifi_secure.h
+      
 env:
     - TEST_DIR=code/fusebox/design_software
-    - TEST_DIR=code/laser  
+    - TEST_DIR=code/laser
+    - TEST_DIR=code/push_button
+    - TEST_DIR=code/robot/robotESP
 
 language: python
 python:
