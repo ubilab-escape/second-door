@@ -1,7 +1,6 @@
 
 #include <Arduino.h>
 #include "wifi_secure.h"
-#include "string.h"
 #include "MqttBase.h"
 
 void blink();
@@ -48,7 +47,6 @@ void solved(){
 }
 
 void callback(const char* method1, const char* state, int daten) {
-  Serial.println("LOGIC CALLBACK");
   if (strcmp(method1, "TRIGGER") == 0) {
     if (strcmp(state, "off") == 0) {
       // configure LED PWM functionalitites
@@ -100,6 +98,7 @@ void setup() {
 
   mqtt_com = new MqttBase(mqtt_server, mqtt_client_name, 1883);
   mqtt_com->init(ssid, password, mqtt_topics, logic_callbacks);
+  mqtt_com->publish(mqtt_topic,"STATUS", "inactive", 0);
 }
 
 void loop() {
