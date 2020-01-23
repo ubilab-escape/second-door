@@ -89,6 +89,9 @@ eagle.epf
 .Spotlight-V100
 .Trashes
 
+# Wifi password #
+######################
+wifi_secure.h
 # Platformio files
 ######################
 .pio

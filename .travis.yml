@@ -1,0 +1,49 @@
+# Continuous Integration (CI) is the practice, in software
+# engineering, of merging all developer working copies with a shared mainline
+# several times a day < https://docs.platformio.org/page/ci/index.html >
+
+#
+# Template #1: General project. Test it using existing `platformio.ini`.
+#
+git:
+    submodules: false
+
+before-install:
+#   - echo -e "\n\nmachine github.com\n  15cedd772e716ca79d7736b194f68aed4e70d903 \n"  > ~/.netrc
+    - sed -i 's/git@github.com:/https:\/\/github.com\//' .gitmodules    
+    - git submodule update --init --recursive    
+    - touch code/fusebox/design_software/include/wifi_secure.h 
+    - echo "const char* ssid = \"fake_ssid\"; const char* password = \"fake_pwd\";" > code/fusebox/design_software/include/wifi_secure.h
+    - touch code/laser/include/wifi_secure.h
+    - echo "const char* ssid = \"fake_ssid\"; const char* password = \"fake_pwd\";" > code/laser/include/wifi_secure.h
+    - touch code/push_button/include/wifi_secure.h
+    - echo "const char* ssid = \"fake_ssid\"; const char* password = \"fake_pwd\";" > code/push_button/include/wifi_secure.h
+    - touch code/robot/robotESP/include/wifi_secure.h
+    - echo "const char* ssid = \"fake_ssid\"; const char* password = \"fake_pwd\";" > code/robot/robotESP/include/wifi_secure.h
+      
+env:
+    - TEST_DIR=code/fusebox/design_software
+    - TEST_DIR=code/laser
+    - TEST_DIR=code/push_button
+    - TEST_DIR=code/robot/robotESP
+    - TEST_DIR=code/robot/robotPS2
+
+language: python
+python:
+    - "2.7"
+
+sudo: false
+cache:
+    directories:
+        - "~/.platformio"
+
+install:
+    - pip install -U platformio
+    - platformio update
+
+script:
+    - cd $TEST_DIR
+    - platformio run
+
+notifications:
+    slack: ubilab-escape:Afsqn7M0eOFYD7lG2qzgNr1g
