@@ -17,7 +17,7 @@ StaticJsonDocument<300> rxdoc;
 
 // Add your MQTT Broker IP address, example:
 //const char* mqtt_server = "192.168.1.144";
-const char* mqtt_server = "10.0.0.2";
+const char* mqtt_server = "10.0.7.154";
 
 WiFiClient espClient;
 PubSubClient client(espClient);

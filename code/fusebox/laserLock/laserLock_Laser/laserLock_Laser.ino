@@ -1,6 +1,6 @@
 
-#include <WiFi.h>
-#include <PubSubClient.h>
+//#include <WiFi.h>
+//#include <PubSubClient.h>
 #include <ArduinoJson.h>
 #include <Adafruit_NeoPixel.h>
 
@@ -17,7 +17,7 @@ const char* Topics[4] = {"7/fusebox", "7/robot", "7/laser", "7/buttonServer"};
 const char* mqtt_topic = Topics[topicNumber];
 
 
-StaticJsonDocument<300> rxdoc;
+//StaticJsonDocument<300> rxdoc;
 
 // setting PWM properties
 const int freq = 50;
@@ -37,8 +37,8 @@ Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUM_PIXEL, RGB_RING_PIN, NEO_GRB + 
 
 const char* mqtt_server = "172.20.10.9";
 
-WiFiClient espClient;
-PubSubClient client(espClient);
+//WiFiClient espClient;
+//PubSubClient client(espClient);
 long lastMsg = 0;
 char msg[50];
 int value = 0;
@@ -101,7 +101,7 @@ void setup_wifi() {
 
 ///////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////
-void callback(char* topic, byte* message, unsigned int length) {
+/*void callback(char* topic, byte* message, unsigned int length) {
   Serial.print("Message arrived on topic: ");
   Serial.print(topic);
   Serial.print(". Message: ");
@@ -157,7 +157,7 @@ void callback(char* topic, byte* message, unsigned int length) {
     }
     
 }
-
+*/
 ///////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////
 void reconnect() {
