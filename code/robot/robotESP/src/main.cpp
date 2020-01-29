@@ -19,11 +19,11 @@ bool robot_on = false;
 void TaskTalk2Robot(void *pvParameters);
 
 void callback(const char *method1, const char *state, int daten) {
-  if (strcmp(method1, "TRIGGER") == 0) {
-    if (strcmp(state, "on") == 0) {
+  if (strcmp(state, "on") == 0 || strcmp(state, "ON") == 0) {
+    if (strcmp(state, "on") == 0 || strcmp(state, "ON") == 0) {
       robot_on = true;
     }
-    if (strcmp(state, "off") == 0) {
+    if (strcmp(state, "off") == 0 || strcmp(state, "OFF") == 0) {
       robot_on = false;
     }
   }
