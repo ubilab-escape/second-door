@@ -16,6 +16,11 @@ In this file we are going to show and document the main implementation tasks.
 </p>
 <p align="center">Figure X: Design fuse box<p align="center">
 
+<p align="center"> 
+<img src="implementation/fusebox/finished_box.jpg" width=400>
+</p>
+<p align="center">Figure X: Finished box with marked riddles<p align="center">
+
 ## Rewiring
 
 ----->TODO<-----
@@ -73,7 +78,7 @@ The robot will be controlled with an wireless PS2 controller which is attached t
 
 <p align="center">Figure X: PS2 controller wireless with pinout<p align="center">
 
-As chassis for the robot an old prototype from the university is used(Picture will follow). There is already some electronic to controll the two dc-motors.
+As chassis for the robot an old prototype from the university is used. There is already some electronic to controll the two dc-motors.
 
 <p align="center"> 
 <img src="implementation/robot/engine_control_robot.png" width=400>
@@ -81,3 +86,8 @@ As chassis for the robot an old prototype from the university is used(Picture wi
 <p align="center">Figure X: Pinout for existing robot electronic<p align="center">
 
 The pins "motor A1" and "motor A2" are used to controll the left wheel of the robot. Pins "motor B1" and "motor B2" for the right wheel. A LED is used to visualize if the battery of the robot is low. Furthermore there are LEDs "arround" the robot to attract attention of the participants.
+
+<p align="center"> 
+<img src="implementation/robot/robot.jpeg" width=400>
+</p>
+<p align="center">Figure X: Robot with LEDs<p align="center">
