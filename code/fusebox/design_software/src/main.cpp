@@ -42,15 +42,14 @@
 
 // Puzzle States
 enum tPuzzleState { INACTIVE, ACTIVE, SOLVED, UNSOLVED };
-tPuzzleState puzzleStateRewiring0 = UNSOLVED;
-tPuzzleState puzzleStateRewiring1 = UNSOLVED;
-tPuzzleState puzzleStatePotis = UNSOLVED;
-tPuzzleState puzzleStateLaserLock = UNSOLVED;
+// tPuzzleState puzzleStateRewiring0 = UNSOLVED;
+// tPuzzleState puzzleStateRewiring1 = UNSOLVED;
+// tPuzzleState puzzleStateLaserLock = UNSOLVED;
 
-bool initTaskRewiring0 = false;
-bool initTaskRewiring1 = false;
-bool initTaskPotentiometer = false;
-bool initTaskLaserDetection = false;
+tPuzzleState statePotentiometer = INACTIVE;
+tPuzzleState stateRewiring0 = INACTIVE;
+tPuzzleState stateRewiring1 = INACTIVE;
+tPuzzleState stateLaserDetection = INACTIVE;
 
 // 7 Segment
 MAX7221 seg1 = MAX7221(MAX7221_CS, 1, MAX7221::SEGMENT);
@@ -106,7 +105,6 @@ TaskHandle_t xHandleMqttPublish;
 TickType_t xDelay1000ms = pdMS_TO_TICKS(1000);
 TickType_t xDelay2000ms = pdMS_TO_TICKS(2000);
 
-
 // Init Functions
 void initPotentiometers(void);
 void initLedRing(void);
@@ -137,17 +135,27 @@ void setup() {
 
   // Attach Control Task
   xTaskCreatePinnedToCore(TaskControlPuzzleState, "TaskControlPuzzleState",
-                          8192, NULL, 3, &xHandleControlPuzzleState, 0);
+                          8192, NULL, 3, &xHandleControlPuzzleState, 1);
 
   // Mqtt Tasks
   xTaskCreatePinnedToCore(TaskMqttLoop, "TaskMqttLoop", 8192, NULL, 1,
                           &xHandleMqttLoop, 0);
-  xTaskCreatePinnedToCore(TaskMqttPublish, "TaskMqttPublish", 8192, NULL, 2,
-                          &xHandleMqttPublish, 0);
+  // xTaskCreatePinnedToCore(TaskMqttPublish, "TaskMqttPublish", 8192, NULL, 2,
+  //                         &xHandleMqttPublish, 0);
 
   // Fake Riddle Tasks
   xTaskCreatePinnedToCore(TaskPiezoButtonReadout, "TaskPiezoButtonReadout",
                           4096, NULL, 5, NULL, 1);
+
+  // Puzzles
+  xTaskCreatePinnedToCore(TaskPotentiometerReadout, "TaskPotentiometerReadout",
+                          8192, NULL, 3, &xHandlePotentiometerReadout, 1);
+  xTaskCreatePinnedToCore(TaskLaserLock, "TaskLaserLock", 8192, NULL, 3,
+                          &xHandleLedRing, 1);
+  xTaskCreatePinnedToCore(TaskWiring0Readout, "TaskWiring0Readout", 8192, NULL,
+                          3, &xHandleWiring0Readout, 1);
+  xTaskCreatePinnedToCore(TaskWiring1Readout, "TaskWiring1Readout", 8192, NULL,
+                          3, &xHandleWiring1Readout, 1);
 }
 
 void loop() {
@@ -165,10 +173,10 @@ void initLedMatrix(void) {
 void initSevenSegment(void) {
   Serial.print("Setup Seven Segment Display ... ");
   seg1.initMAX();
-  seg1.transferData(0x01, 1);
-  seg1.transferData(0x02, 9);
-  seg1.transferData(0x03, 9);
-  seg1.transferData(0x04, 5);
+  seg1.transferData(0x01, 0);
+  seg1.transferData(0x02, 1);
+  seg1.transferData(0x03, 8);
+  seg1.transferData(0x04, 7);
   Serial.println("done!");
 }
 
@@ -199,14 +207,13 @@ void initLedRing(void) {
   Serial.print("Setup LED Ring ... ");
   // set led ring to red
   pixels.begin();
-  pixels.setBrightness(255); // die Helligkeit setzen 0 dunke -> 255 ganz hell
-  pixels.show();             // Alle NeoPixel sind im Status "aus".
+  pixels.setBrightness(100); // die Helligkeit setzen 0 dunke -> 255 ganz hell
+  pixels.show();             // Alle NeoPixel sind im status "aus".
 
+  // no color in init
   for (int i = 0; i < NUM_PIXEL; i++) {
-    // pixels.Color takes RGB values, from 0,0,0 up to 255,255,255
-    pixels.setPixelColor(
-        i, pixels.Color(255, 0, 0)); // Moderately bright green color.
-    pixels.show(); // This sends the updated pixel color to the hardware.
+    pixels.setPixelColor(i, pixels.Color(0, 0, 0));
+    pixels.show();
   }
   pinMode(detectorPin, INPUT); // Laser Detector als Eingangssignal setzen
   pinMode(LOCK_0, OUTPUT);     // Lock als Ausgang setzen
@@ -242,37 +249,42 @@ void initMqtt(void) {
 void TaskPotentiometerReadout(void *pvParameters) {
   (void)pvParameters;
   for (;;) {
-    SERIALPRINTS("TaskPotentiometerReadout: \t")
-
-    uint16_t pValues[4];
-    float adcValues[4];
-
-    for (uint8_t i = 0; i < 4; i++) {
-      adcValues[i] = ads.readADC_SingleEnded(i);
-      adcValues[i] = adcValues[i] * 9 / 1024;
-      pValues[i] = adcValues[i];
-      SERIALPRINT("", i);
-      SERIALPRINTS(": ");
-      SERIALPRINT("", pValues[i]);
-      SERIALPRINTS(" ");
+    if (statePotentiometer == ACTIVE) {
+      SERIALPRINTS("ACTIVE:\tTaskPotentiometerReadout: \t")
+      uint16_t pValues[4];
+      float adcValues[4];
+      for (uint8_t i = 0; i < 4; i++) {
+        adcValues[i] = ads.readADC_SingleEnded(i);
+        adcValues[i] = adcValues[i] * 9 / 1024;
+        pValues[i] = adcValues[i];
+        SERIALPRINT("", i);
+        SERIALPRINTS(": ");
+        SERIALPRINT("", pValues[i]);
+        SERIALPRINTS(" ");
+      }
+      seg1.transferData(0x01, pValues[0]);
+      seg1.transferData(0x02, pValues[1]);
+      seg1.transferData(0x03, pValues[2]);
+      seg1.transferData(0x04, pValues[3]);
+      if (pValues[0] == 1 && pValues[1] == 9 && pValues[2] == 9 &&
+          pValues[3] == 5) {
+        SERIALPRINTS("Potis Solved!\n");
+        statePotentiometer = SOLVED;
+        // Publish to MQTT
+        mqttCommunication->publish("7/fusebox/potentiometer", "status",
+                                   "solved", true);
+      } else {
+        SERIALPRINTS("Potis not solved!\n");
+        // statePotentiometer = UNSOLVED;
+      }
+      vTaskDelay(500);
+    } else if (statePotentiometer == SOLVED) {
+      SERIALPRINTS("SOLVED:\t\tTaskPotentiometerReadout\n")
+      vTaskDelay(500);
+    } else if (statePotentiometer == INACTIVE) {
+      SERIALPRINTS("INACTIVE:\tTaskPotentiometerReadout\n")
+      vTaskDelay(500);
     }
-
-    seg1.transferData(0x01, pValues[0]);
-    seg1.transferData(0x02, pValues[1]);
-    seg1.transferData(0x03, pValues[2]);
-    seg1.transferData(0x04, pValues[3]);
-
-    if (pValues[0] == 1 && pValues[1] == 9 && pValues[2] == 9 &&
-        pValues[3] == 5) {
-      SERIALPRINTS("Potis Solved!\n");
-      puzzleStatePotis = SOLVED;
-
-    } else {
-      SERIALPRINTS("Potis not solved!\n");
-      puzzleStatePotis = UNSOLVED;
-    }
-
-    vTaskDelay(500);
   }
 }
 
@@ -280,121 +292,150 @@ void TaskLaserLock(void *pvParameters) {
   (void)pvParameters;
 
   for (;;) {
-    static uint8_t byte_count = 0;
 
-    sequence[byte_count] = digitalRead(detectorPin);
+    if (stateLaserDetection == ACTIVE) {
+      SERIALPRINTS("ACTIVE:\tTaskLaserDetection: \t\n")
+      static uint8_t byte_count = 0;
 
-    if (byte_count == SEQUENDE_SIZE) {
-      byte_count = 0;
-      uint8_t zeros = analyse_sequence(sequence, 0);
-      uint8_t ones = analyse_sequence(sequence, 1);
+      sequence[byte_count] = digitalRead(detectorPin);
 
-      // chekc if sequenz is correct
-      if (zeros == ones && puzzleStateLaserLock == UNSOLVED) {
-        SERIALPRINTS("Sequence detected ");
-        SERIALPRINT("", zeros);
-        SERIALPRINTS(" ");
-        SERIALPRINT("", ones);
-        SERIALPRINTS("\n");
-        numberOfSequences++;
+      if (byte_count == SEQUENDE_SIZE) {
+        byte_count = 0;
+        uint8_t zeros = analyse_sequence(sequence, 0);
+        uint8_t ones = analyse_sequence(sequence, 1);
+
+        // chekc if sequenz is correct
+        if (zeros == ones && stateLaserDetection == ACTIVE) {
+          SERIALPRINTS("Sequence detected ");
+          SERIALPRINT("", zeros);
+          SERIALPRINTS(" ");
+          SERIALPRINT("", ones);
+          SERIALPRINTS("\n");
+          numberOfSequences++;
+          old_time_in_ms = millis();
+          // old_time_in_ms = xTaskGetTickCount();
+        }
+      }
+
+      // check if new additional LED shoulb set to green
+      if ((numberOfSequences % 2 == 0) && (numberOfSequences > 0)) {
+        uint8_t RGB_led = (uint8_t)numberOfSequences / 2;
+        pixels.setPixelColor(
+            RGB_led, pixels.Color(0, 255, 0)); // Moderately bright green color.
+        pixels.show(); // This sends the updated pixel color to the hardware.
+      }
+
+      // check if puzzle is solved
+      if (numberOfSequences > MAX_SEQUENZES) {
+        stateLaserDetection = SOLVED;
+        mqttCommunication->publish("7/fusebox/laserDetection", "status",
+                                   "solved", true);
+        SERIALPRINTS("Fuse Box open\n");
+        numberOfSequences = 0;
+        blink_ring(5, 2);
+
+        // open LOCK
+        digitalWrite(LOCK_0, HIGH);
+        vTaskDelay(1000);
+        digitalWrite(LOCK_0, LOW);
+      }
+
+      // int time_in_ms = xTaskGetTickCount() - old_time_in_ms;
+      int time_in_ms = millis() - old_time_in_ms;
+
+      if (time_in_ms >= 500) {
+        if (numberOfSequences > 0) {
+          if (numberOfSequences % 2 == 0) {
+            uint8_t RGB_led = (uint8_t)numberOfSequences / 2;
+            pixels.setPixelColor(RGB_led,
+                                 pixels.Color(255, 0, 0)); // set led to red
+            pixels
+                .show(); // This sends the updated pixel color to the hardware.
+          }
+          numberOfSequences--; // count down sequence if max time was reached
+        }
         old_time_in_ms = millis();
         // old_time_in_ms = xTaskGetTickCount();
       }
+      byte_count++;
+      vTaskDelay(10);
+    } else if (stateLaserDetection == SOLVED) {
+      SERIALPRINTS("SOLVED:\t\tTaskLaserDetection\n")
+      vTaskDelay(500);
+    } else if (stateLaserDetection == INACTIVE) {
+      SERIALPRINTS("INACTIVE:\tTaskLaserDetection\n")
+      vTaskDelay(500);
     }
-
-    // check if new additional LED shoulb set to green
-    if ((numberOfSequences % 2 == 0) && (numberOfSequences > 0)) {
-      uint8_t RGB_led = (uint8_t)numberOfSequences / 2;
-      pixels.setPixelColor(
-          RGB_led, pixels.Color(0, 255, 0)); // Moderately bright green color.
-      pixels.show(); // This sends the updated pixel color to the hardware.
-    }
-
-    // check if puzzle is solved
-    if (numberOfSequences > MAX_SEQUENZES) {
-      puzzleStateLaserLock = SOLVED;
-      SERIALPRINTS("Fuse Box open\n");
-      numberOfSequences = 0;
-      blink_ring(5, 2);
-
-      // open LOCK
-      digitalWrite(LOCK_0, HIGH);
-      vTaskDelay(1000);
-      digitalWrite(LOCK_0, LOW);
-    }
-
-    // int time_in_ms = xTaskGetTickCount() - old_time_in_ms;
-    int time_in_ms = millis() - old_time_in_ms;
-
-    if (time_in_ms >= 500) {
-      if (numberOfSequences > 0) {
-        if (numberOfSequences % 2 == 0) {
-          uint8_t RGB_led = (uint8_t)numberOfSequences / 2;
-          pixels.setPixelColor(RGB_led,
-                               pixels.Color(255, 0, 0)); // set led to red
-          pixels.show(); // This sends the updated pixel color to the hardware.
-        }
-        numberOfSequences--; // count down sequence if max time was reached
-      }
-      old_time_in_ms = millis();
-      // old_time_in_ms = xTaskGetTickCount();
-    }
-    byte_count++;
-    vTaskDelay(10);
   }
 }
 
 void TaskWiring0Readout(void *pvParameters) {
   (void)pvParameters;
   for (;;) {
-    SERIALPRINTS("TaskWiring0Readout: \t\t");
-
-    float rewiringValues0[5];
-    uint16_t rewiringPins0[] = {REWIRE_0_1, REWIRE_0_2, REWIRE_0_3, REWIRE_0_4,
-                                REWIRE_0_5};
-    for (int i = 0; i <= 4; i++) {
-      rewiringValues0[i] = analogRead(rewiringPins0[i]);
-      rewiringValues0[i] = rewiringValues0[i] / 4095 * 33;
-      SERIALPRINT("", i);
-      SERIALPRINTS(": ");
-      SERIALPRINT("", rewiringValues0[i]);
-      SERIALPRINTS(" ");
+    if (stateRewiring0 == ACTIVE) {
+      SERIALPRINTS("ACTIVE:\tTaskWiring0Readout: \t\t")
+      float rewiringValues0[5];
+      uint16_t rewiringPins0[] = {REWIRE_0_1, REWIRE_0_2, REWIRE_0_3,
+                                  REWIRE_0_4, REWIRE_0_5};
+      for (int i = 0; i <= 4; i++) {
+        rewiringValues0[i] = analogRead(rewiringPins0[i]);
+        rewiringValues0[i] = rewiringValues0[i] / 4095 * 33;
+        SERIALPRINT("", i);
+        SERIALPRINTS(": ");
+        SERIALPRINT("", rewiringValues0[i]);
+        SERIALPRINTS(" ");
+      }
+      // Measured Values: 33 25 19 13 7
+      // TODO: Problem with [0]: WiFi and ADC not working together,
+      // TODO: replaced 13 by 33
+      if ((rewiringValues0[3] >= 30 && rewiringValues0[3] <= 36) &&
+          (rewiringValues0[4] >= 22 && rewiringValues0[4] <= 28) &&
+          (rewiringValues0[1] >= 16 && rewiringValues0[1] <= 22) &&
+          (rewiringValues0[0] >= 30 && rewiringValues0[0] <= 36) &&
+          (rewiringValues0[2] >= 4 && rewiringValues0[2] <= 10)) {
+        SERIALPRINTS("Rewiring 0 solved!\n");
+        stateRewiring0 = SOLVED;
+        mqttCommunication->publish("7/fusebox/rewiring0", "status", "solved",
+                                   true);
+      } else {
+        SERIALPRINTS("Rewiring 0 not solved!\n");
+        // puzzleStateRewiring0 = UNSOLVED;
+      }
+      vTaskDelay(2000);
+    } else if (stateRewiring0 == SOLVED) {
+      SERIALPRINTS("SOLVED:\t\tTaskWiring0Readout\n")
+      vTaskDelay(500);
+    } else if (stateRewiring0 == INACTIVE) {
+      SERIALPRINTS("INACTIVE:\tTaskWiring0Readout\n")
+      vTaskDelay(500);
     }
-
-    // Measured Values: 33 25 19 13 7
-    // TODO: Problem with [0]: WiFi and ADC not working together,
-    // TODO: replaced 13 by 33
-    if ((rewiringValues0[3] >= 30 && rewiringValues0[3] <= 36) &&
-        (rewiringValues0[4] >= 22 && rewiringValues0[4] <= 28) &&
-        (rewiringValues0[1] >= 16 && rewiringValues0[1] <= 22) &&
-        (rewiringValues0[0] >= 30 && rewiringValues0[0] <= 36) &&
-        (rewiringValues0[2] >= 4 && rewiringValues0[2] <= 10)) {
-      SERIALPRINTS("Rewiring 0 solved!\n");
-      puzzleStateRewiring0 = SOLVED;
-    } else {
-      SERIALPRINTS("Rewiring 0 not solved!\n");
-      puzzleStateRewiring0 = UNSOLVED;
-    }
-
-    vTaskDelay(2000);
   }
 }
 
 void TaskWiring1Readout(void *pvParameters) {
   (void)pvParameters;
   for (;;) {
-    SERIALPRINTS("TaskWiring1Readout: \t\t");
-
-    uint8_t values = portExpander0.read8();
-    // 0x58 + 0x42 = 0x9A = 0b10011010
-    if (values == 0b10011010) {
-      SERIALPRINTS("Rewiring 1 solved!\n")
-      puzzleStateRewiring1 = SOLVED;
-    } else {
-      SERIALPRINTS("Rewiring 1 not solved!\n");
-      puzzleStateRewiring1 = UNSOLVED;
+    if (stateRewiring1 == ACTIVE) {
+      SERIALPRINTS("ACTIVE:\tTaskWiring1Readout: \t\t")
+      uint8_t values = portExpander0.read8();
+      // 0x58 + 0x42 = 0x9A = 0b10011010
+      if (values == 0b10011010) {
+        SERIALPRINTS("Rewiring 1 solved!\n")
+        stateRewiring1 = SOLVED;
+        mqttCommunication->publish("7/fusebox/rewiring1", "status", "solved",
+                                   true);
+      } else {
+        SERIALPRINTS("Rewiring 1 not solved!\n");
+        // puzzleStateRewiring1 = UNSOLVED;
+      }
+      vTaskDelay(2000);
+    } else if (stateRewiring1 == SOLVED) {
+      SERIALPRINTS("SOLVED:\t\tTaskWiring1Readout\n")
+      vTaskDelay(500);
+    } else if (stateRewiring1 == INACTIVE) {
+      SERIALPRINTS("INACTIVE:\tTaskWiring1Readout\n")
+      vTaskDelay(500);
     }
-    vTaskDelay(2000);
   }
 }
 
@@ -433,37 +474,37 @@ void TaskControlPuzzleState(void *pvParameters) {
   (void)pvParameters;
   for (;;) {
 
-    if (puzzleStatePotis == SOLVED && puzzleStateRewiring0 == SOLVED &&
-        puzzleStateRewiring1 == SOLVED && puzzleStateLaserLock == SOLVED) {
+    if (statePotentiometer == SOLVED && stateRewiring0 == SOLVED &&
+        stateRewiring1 == SOLVED && stateLaserDetection == SOLVED) {
       ledm1.clear();
       ledm1.drawText(25, 7, "Solved!", MD_MAXPanel::ROT_180);
-
-      // Remove Solved Tasks
-      // vTaskSuspend(xHandleWiring0Readout);
-      // vTaskSuspend(xHandleWiring1Readout);
-      // vTaskSuspend(xHandlePotentiometerReadout);
-      // vTaskSuspend(xHandleLedRing);
 
     } else {
 
       ledm1.clear();
-      if (puzzleStatePotis == SOLVED) {
+      if (statePotentiometer == SOLVED) {
         ledm1.drawCircle(4, 11, 2);
       } else {
         ledm1.drawRectangle(4, 11, 6, 13);
       }
-      if (puzzleStateRewiring0 == SOLVED) {
+      if (stateRewiring0 == SOLVED) {
         ledm1.drawCircle(12, 11, 2);
       } else {
         ledm1.drawRectangle(12, 11, 14, 13);
       }
-      if (puzzleStateRewiring1 == SOLVED) {
+      if (stateRewiring1 == SOLVED) {
         ledm1.drawCircle(20, 11, 2);
       } else {
         ledm1.drawRectangle(20, 11, 22, 13);
       }
-      if (puzzleStateLaserLock == SOLVED) {
+      if (stateLaserDetection == SOLVED) {
         ledm1.drawCircle(28, 11, 2);
+        for (int i = 0; i < NUM_PIXEL; i++) {
+          // pixels.Color takes RGB values, from 0,0,0 up to 255,255,255
+          pixels.setPixelColor(
+              i, pixels.Color(0, 255, 0)); // Moderately bright green color.
+        }
+        pixels.show(); // This sends the updated pixel color to the hardware.
       } else {
         ledm1.drawRectangle(28, 11, 30, 13);
       }
@@ -530,105 +571,97 @@ void TaskMqttLoop(void *pvParameters) {
   }
 }
 
-void TaskMqttPublish(void *pvParameters) {
-  (void)pvParameters;
-  for (;;) {
-    if (puzzleStatePotis == SOLVED) {
-      mqttCommunication->publish("7/fusebox/potentiometer", "STATUS", "solved",
-                                 true);
-    } else {
-      mqttCommunication->publish("7/fusebox/potentiometer", "STATUS",
-                                 "unsolved", false);
-    }
-    vTaskDelay(500);vTaskDelay(500);vTaskDelay(500);vTaskDelay(500);
-    if (puzzleStateRewiring0 == SOLVED) {
-      mqttCommunication->publish("7/fusebox/rewiring0", "STATUS", "solved",
-                                 true);
-    } else {
-      mqttCommunication->publish("7/fusebox/rewiring0", "STATUS", "unsolved",
-                                 false);
-    }
-    vTaskDelay(500);vTaskDelay(500);vTaskDelay(500);vTaskDelay(500);
-    if (puzzleStateRewiring1 == SOLVED) {
-      mqttCommunication->publish("7/fusebox/rewiring1", "STATUS", "solved",
-                                 true);
-    } else {
-      mqttCommunication->publish("7/fusebox/rewiring1", "STATUS", "unsolved",
-                                 false);
-    }
-    vTaskDelay(500);vTaskDelay(500);vTaskDelay(500);vTaskDelay(500);
-    if (puzzleStateLaserLock == SOLVED) {
-      mqttCommunication->publish("7/fusebox/laserDetection", "STATUS", "solved",
-                                 true);
-    } else {
-      mqttCommunication->publish("7/fusebox/laserDetection", "STATUS",
-                                 "unsolved", false);
-    }
-    vTaskDelay(500);vTaskDelay(500);vTaskDelay(500);vTaskDelay(500);
-  }
-}
-
 void callbackLaserDetection(const char *method1, const char *state, int daten) {
-  vTaskSuspend(xHandleMqttPublish);
-  if (initTaskLaserDetection == false) {
-    initTaskLaserDetection = true;
-    if (strcmp(state, "solved") == 0) {
-      SERIALPRINTS("Laser Detection was solved!\n");
-      puzzleStateLaserLock = SOLVED;
-    } else if (strcmp(state, "unsolved") == 0) {
-      SERIALPRINTS("Laser Detection was not solved!\n");
-      xTaskCreatePinnedToCore(TaskLaserLock, "TaskLaserLock", 8192, NULL, 3,
-                              &xHandleLedRing, 1);
+  if (strcmp(method1, "trigger") == 0) {
+    if (strcmp(state, "on") == 0) {
+      // rot
+      for (int i = 0; i < NUM_PIXEL; i++) {
+        pixels.setPixelColor(i, pixels.Color(255, 0, 0));
+        pixels.show();
+      }
+      stateLaserDetection = ACTIVE;
+      mqttCommunication->publish("7/fusebox/laserDetection", "status", "active",
+                                 true);
+
+    } else if (strcmp(state, "off") == 0) {
+      // keine Farbe
+      for (int i = 0; i < NUM_PIXEL; i++) {
+        pixels.setPixelColor(i, pixels.Color(0, 0, 0));
+        pixels.show();
+      }
+      stateLaserDetection = INACTIVE;
+      mqttCommunication->publish("7/fusebox/laserDetection", "status",
+                                 "inactive", true);
     }
-  }
-  vTaskResume(xHandleMqttPublish);
+  } else if (strcmp(method1, "status") == 0) {
+    if (strcmp(state, "solved") == 0) {
+      stateLaserDetection = SOLVED;
+    } else if (strcmp(state, "active") == 0) {
+      stateLaserDetection = ACTIVE;
+    }
+  } 
 }
 
 void callbackRewiring0(const char *method1, const char *state, int daten) {
-  vTaskSuspend(xHandleMqttPublish);
-  if (initTaskRewiring0 == false) {
-    initTaskRewiring0 = true;
+  if (strcmp(method1, "trigger") == 0) {
+    if (strcmp(state, "on") == 0) {
+      stateRewiring0 = ACTIVE;
+      mqttCommunication->publish("7/fusebox/rewiring0", "status", "active",
+                                 true);
+    } else if (strcmp(state, "off") == 0) {
+      stateRewiring0 = INACTIVE;
+      mqttCommunication->publish("7/fusebox/rewiring0", "status", "inactive",
+                                 true);
+    }
+  } else if (strcmp(method1, "status") == 0) {
     if (strcmp(state, "solved") == 0) {
-      SERIALPRINTS("Rewiring 0 was solved!\n");
-      puzzleStateRewiring0 = SOLVED;
-    } else if (strcmp(state, "unsolved") == 0) {
-      SERIALPRINTS("Rewiring 0 was unsolved!\n");
-      xTaskCreatePinnedToCore(TaskWiring0Readout, "TaskWiring0Readout", 8192,
-                              NULL, 3, &xHandleWiring0Readout, 1);
+      stateRewiring0 = SOLVED;
+    } else if (strcmp(state, "active") == 0) {
+      stateRewiring0 = ACTIVE;
     }
   }
-  vTaskResume(xHandleMqttPublish);
 }
 
 void callbackRewiring1(const char *method1, const char *state, int daten) {
-  vTaskSuspend(xHandleMqttPublish);
-  if (initTaskRewiring1 == false) {
-    initTaskRewiring1 = true;
+  if (strcmp(method1, "trigger") == 0) {
+    if (strcmp(state, "on") == 0) {
+      stateRewiring1 = ACTIVE;
+      mqttCommunication->publish("7/fusebox/rewiring1", "status", "active",
+                                 true);
+    } else if (strcmp(state, "off") == 0) {
+      stateRewiring1 = INACTIVE;
+      mqttCommunication->publish("7/fusebox/rewiring1", "status", "inactive",
+                                 true);
+    }
+  } else if (strcmp(method1, "status") == 0) {
     if (strcmp(state, "solved") == 0) {
-      SERIALPRINTS("Rewiring 1 was solved!\n");
-      puzzleStateRewiring1 = SOLVED;
-    } else if (strcmp(state, "unsolved") == 0) {
-      SERIALPRINTS("Rewiring 1 was unsolved!\n");
-      xTaskCreatePinnedToCore(TaskWiring1Readout, "TaskWiring1Readout", 8192,
-                              NULL, 3, &xHandleWiring1Readout, 1);
+      stateRewiring1 = SOLVED;
+    } else if (strcmp(state, "active") == 0) {
+      stateRewiring1 = ACTIVE;
     }
   }
-  vTaskResume(xHandleMqttPublish);
 }
 
 void callbackPotentiometer(const char *method1, const char *state, int daten) {
-  vTaskSuspend(xHandleMqttPublish);
-  if (initTaskPotentiometer == false) {
-    initTaskPotentiometer = true;
+  if (strcmp(method1, "trigger") == 0) {
+    if (strcmp(state, "on") == 0) {
+      statePotentiometer = ACTIVE;
+      mqttCommunication->publish("7/fusebox/potentiometer", "status", "active",
+                                 true);
+    } else if (strcmp(state, "off") == 0 || strcmp(state, "off") == 0) {
+      statePotentiometer = INACTIVE;
+      mqttCommunication->publish("7/fusebox/potentiometer", "status",
+                                 "inactive", true);
+    }
+  } else if (strcmp(method1, "status") == 0) {
     if (strcmp(state, "solved") == 0) {
-      SERIALPRINTS("Potentiometer was solved!\n");
-      puzzleStatePotis = SOLVED;
-    } else if (strcmp(state, "unsolved") == 0) {
-      SERIALPRINTS("Potentiometer was unsolved!\n");
-      xTaskCreatePinnedToCore(TaskPotentiometerReadout,
-                              "TaskPotentiometerReadout", 8192, NULL, 3,
-                              &xHandlePotentiometerReadout, 1);
+      seg1.transferData(0x01, 1);
+      seg1.transferData(0x02, 9);
+      seg1.transferData(0x03, 9);
+      seg1.transferData(0x04, 5);
+      statePotentiometer = SOLVED;
+    } else if (strcmp(state, "active") == 0) {
+      statePotentiometer = ACTIVE;
     }
   }
-  vTaskResume(xHandleMqttPublish);
 }
