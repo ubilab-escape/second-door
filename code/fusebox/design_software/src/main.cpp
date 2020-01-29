@@ -21,6 +21,10 @@
 #define ARDUINO_RUNNING_CORE 1
 #endif
 
+#define INIT_DELAY 1000
+#define INACTIVE_DELAY 5000
+#define SOLVED_DELAY 1000
+
 #define MAX7221_CS 5
 #define MAX7219_CS 12
 #define PIEZO_0 13
@@ -41,15 +45,12 @@
 #define REWIRE_0_5 34
 
 // Puzzle States
-enum tPuzzleState { INACTIVE, ACTIVE, SOLVED, UNSOLVED };
-// tPuzzleState puzzleStateRewiring0 = UNSOLVED;
-// tPuzzleState puzzleStateRewiring1 = UNSOLVED;
-// tPuzzleState puzzleStateLaserLock = UNSOLVED;
+enum tPuzzleState { INACTIVE, ACTIVE, SOLVED, UNSOLVED, INIT };
 
-tPuzzleState statePotentiometer = INACTIVE;
-tPuzzleState stateRewiring0 = INACTIVE;
-tPuzzleState stateRewiring1 = INACTIVE;
-tPuzzleState stateLaserDetection = INACTIVE;
+tPuzzleState statePotentiometer;
+tPuzzleState stateRewiring0;
+tPuzzleState stateRewiring1;
+tPuzzleState stateLaserDetection;
 
 // 7 Segment
 MAX7221 seg1 = MAX7221(MAX7221_CS, 1, MAX7221::SEGMENT);
@@ -82,7 +83,7 @@ void callbackRewiring1(const char *method1, const char *state, int daten);
 void callbackPotentiometer(const char *method1, const char *state, int daten);
 
 // Task Attachment
-void TaskPotentiometerReadout(void *pvParameters);
+void TaskPotentiometer(void *pvParameters);
 void TaskWiring0Readout(void *pvParameters);
 void TaskWiring1Readout(void *pvParameters);
 void TaskPiezoButtonReadout(void *pvParameters);
@@ -95,7 +96,7 @@ void TaskMqttPublish(void *pvParameters);
 // Task Handles
 TaskHandle_t xHandleLedRing;
 TaskHandle_t xHandleControlPuzzleState;
-TaskHandle_t xHandlePotentiometerReadout;
+TaskHandle_t xHandlePotentiometer;
 TaskHandle_t xHandleWiring0Readout;
 TaskHandle_t xHandleWiring1Readout;
 TaskHandle_t xHandleMqttLoop;
@@ -106,12 +107,12 @@ TickType_t xDelay1000ms = pdMS_TO_TICKS(1000);
 TickType_t xDelay2000ms = pdMS_TO_TICKS(2000);
 
 // Init Functions
-void initPotentiometers(void);
-void initLedRing(void);
-void initPortExpander(void);
+void initPotentiometer(void);
+void initLaserDetection(void);
+void initRewiring(void);
+
 void initPiezoBuzzer(void);
 void initLedMatrix(void);
-void initSevenSegment(void);
 void initMqtt(void);
 
 void setup() {
@@ -124,11 +125,12 @@ void setup() {
 
   initMqtt();
   vTaskDelay(1000);
-  initPotentiometers();
+
+  initPotentiometer();
+  initLaserDetection();
+  initRewiring();
+
   initPiezoBuzzer();
-  initLedRing();
-  initPortExpander();
-  initSevenSegment();
   initLedMatrix();
 
   Serial.println("Setup finished");
@@ -148,8 +150,8 @@ void setup() {
                           4096, NULL, 5, NULL, 1);
 
   // Puzzles
-  xTaskCreatePinnedToCore(TaskPotentiometerReadout, "TaskPotentiometerReadout",
-                          8192, NULL, 3, &xHandlePotentiometerReadout, 1);
+  xTaskCreatePinnedToCore(TaskPotentiometer, "TaskPotentiometer", 8192, NULL, 3,
+                          &xHandlePotentiometer, 1);
   xTaskCreatePinnedToCore(TaskLaserLock, "TaskLaserLock", 8192, NULL, 3,
                           &xHandleLedRing, 1);
   xTaskCreatePinnedToCore(TaskWiring0Readout, "TaskWiring0Readout", 8192, NULL,
@@ -170,19 +172,11 @@ void initLedMatrix(void) {
   Serial.println("done!");
 }
 
-void initSevenSegment(void) {
-  Serial.print("Setup Seven Segment Display ... ");
-  seg1.initMAX();
-  seg1.transferData(0x01, 0);
-  seg1.transferData(0x02, 1);
-  seg1.transferData(0x03, 8);
-  seg1.transferData(0x04, 7);
-  Serial.println("done!");
-}
-
-void initPotentiometers(void) {
+void initPotentiometer(void) {
   Serial.print("Setup Potentiometer ... ");
+  seg1.initMAX();
   ads.begin();
+  statePotentiometer = INIT;
   Serial.println("done!");
 }
 
@@ -196,14 +190,16 @@ void initPiezoBuzzer(void) {
   Serial.println("done!");
 }
 
-void initPortExpander(void) {
+void initRewiring(void) {
   Serial.print("Setup Port Expander ... ");
   portExpander0.begin();
   portExpander1.begin();
+  stateRewiring0 = INIT;
+  stateRewiring1 = INIT;
   Serial.println("done!");
 }
 
-void initLedRing(void) {
+void initLaserDetection(void) {
   Serial.print("Setup LED Ring ... ");
   // set led ring to red
   pixels.begin();
@@ -218,6 +214,7 @@ void initLedRing(void) {
   pinMode(detectorPin, INPUT); // Laser Detector als Eingangssignal setzen
   pinMode(LOCK_0, OUTPUT);     // Lock als Ausgang setzen
 
+  stateLaserDetection = INIT;
   Serial.println("done!");
 }
 
@@ -246,11 +243,11 @@ void initMqtt(void) {
   Serial.println("done!");
 }
 
-void TaskPotentiometerReadout(void *pvParameters) {
+void TaskPotentiometer(void *pvParameters) {
   (void)pvParameters;
   for (;;) {
     if (statePotentiometer == ACTIVE) {
-      SERIALPRINTS("ACTIVE:\tTaskPotentiometerReadout: \t")
+      SERIALPRINTS("ACTIVE:\tTaskPotentiometer: \t")
       uint16_t pValues[4];
       float adcValues[4];
       for (uint8_t i = 0; i < 4; i++) {
@@ -279,11 +276,29 @@ void TaskPotentiometerReadout(void *pvParameters) {
       }
       vTaskDelay(500);
     } else if (statePotentiometer == SOLVED) {
-      SERIALPRINTS("SOLVED:\t\tTaskPotentiometerReadout\n")
-      vTaskDelay(500);
+      SERIALPRINTS("SOLVED:\t\tTaskPotentiometer\n")
+      // Show Solution
+      seg1.transferData(0x01, 1);
+      seg1.transferData(0x02, 9);
+      seg1.transferData(0x03, 9);
+      seg1.transferData(0x04, 5);
+      vTaskDelay(SOLVED_DELAY);
     } else if (statePotentiometer == INACTIVE) {
-      SERIALPRINTS("INACTIVE:\tTaskPotentiometerReadout\n")
-      vTaskDelay(500);
+      SERIALPRINTS("INACTIVE:\tTaskPotentiometer\n")
+      // Show Solution
+      seg1.transferData(0x01, 1);
+      seg1.transferData(0x02, 9);
+      seg1.transferData(0x03, 9);
+      seg1.transferData(0x04, 5);
+      vTaskDelay(INACTIVE_DELAY);
+    } else if (statePotentiometer == INIT) {
+      SERIALPRINTS("INIT:\t\tTaskPotentiometer\n")
+      // Dont show Solution
+      seg1.transferData(0x01, 0);
+      seg1.transferData(0x02, 1);
+      seg1.transferData(0x03, 8);
+      seg1.transferData(0x04, 7);
+      vTaskDelay(INIT_DELAY);
     }
   }
 }
@@ -349,8 +364,7 @@ void TaskLaserLock(void *pvParameters) {
             uint8_t RGB_led = (uint8_t)numberOfSequences / 2;
             pixels.setPixelColor(RGB_led,
                                  pixels.Color(255, 0, 0)); // set led to red
-            pixels
-                .show(); // This sends the updated pixel color to the hardware.
+            pixels.show();
           }
           numberOfSequences--; // count down sequence if max time was reached
         }
@@ -361,10 +375,28 @@ void TaskLaserLock(void *pvParameters) {
       vTaskDelay(10);
     } else if (stateLaserDetection == SOLVED) {
       SERIALPRINTS("SOLVED:\t\tTaskLaserDetection\n")
-      vTaskDelay(500);
+      // Show Solution
+      for (int i = 0; i < NUM_PIXEL; i++) {
+        pixels.setPixelColor(i, pixels.Color(0, 255, 0));
+      }
+      pixels.show();
+      vTaskDelay(SOLVED_DELAY);
     } else if (stateLaserDetection == INACTIVE) {
       SERIALPRINTS("INACTIVE:\tTaskLaserDetection\n")
-      vTaskDelay(500);
+      // Show nothing
+      for (int i = 0; i < NUM_PIXEL; i++) {
+        pixels.setPixelColor(i, pixels.Color(0, 0, 0));
+      }
+      pixels.show();
+      vTaskDelay(INACTIVE_DELAY);
+    } else if (stateLaserDetection == INIT) {
+      SERIALPRINTS("INIT:\t\tTaskLaserDetection\n")
+      // Show red
+      for (int i = 0; i < NUM_PIXEL; i++) {
+        pixels.setPixelColor(i, pixels.Color(255, 0, 0));
+      }
+      pixels.show();
+      vTaskDelay(INIT_DELAY);
     }
   }
 }
@@ -404,10 +436,13 @@ void TaskWiring0Readout(void *pvParameters) {
       vTaskDelay(2000);
     } else if (stateRewiring0 == SOLVED) {
       SERIALPRINTS("SOLVED:\t\tTaskWiring0Readout\n")
-      vTaskDelay(500);
+      vTaskDelay(SOLVED_DELAY);
     } else if (stateRewiring0 == INACTIVE) {
       SERIALPRINTS("INACTIVE:\tTaskWiring0Readout\n")
-      vTaskDelay(500);
+      vTaskDelay(INACTIVE_DELAY);
+    } else if (stateRewiring0 == INIT) {
+      SERIALPRINTS("INIT:\t\tTaskWiring0Readout\n")
+      vTaskDelay(INIT_DELAY);
     }
   }
 }
@@ -431,10 +466,13 @@ void TaskWiring1Readout(void *pvParameters) {
       vTaskDelay(2000);
     } else if (stateRewiring1 == SOLVED) {
       SERIALPRINTS("SOLVED:\t\tTaskWiring1Readout\n")
-      vTaskDelay(500);
+      vTaskDelay(SOLVED_DELAY);
     } else if (stateRewiring1 == INACTIVE) {
       SERIALPRINTS("INACTIVE:\tTaskWiring1Readout\n")
-      vTaskDelay(500);
+      vTaskDelay(INACTIVE_DELAY);
+    } else if (stateRewiring1 == INIT) {
+      SERIALPRINTS("INIT:\t\tTaskWiring1Readout\n")
+      vTaskDelay(INIT_DELAY);
     }
   }
 }
@@ -474,37 +512,31 @@ void TaskControlPuzzleState(void *pvParameters) {
   (void)pvParameters;
   for (;;) {
 
-    if (statePotentiometer == SOLVED && stateRewiring0 == SOLVED &&
-        stateRewiring1 == SOLVED && stateLaserDetection == SOLVED) {
+    if (statePotentiometer == INACTIVE && stateRewiring0 == INACTIVE &&
+        stateRewiring1 == INACTIVE && stateLaserDetection == INACTIVE) {
       ledm1.clear();
       ledm1.drawText(25, 7, "Solved!", MD_MAXPanel::ROT_180);
 
     } else {
 
       ledm1.clear();
-      if (statePotentiometer == SOLVED) {
+      if (statePotentiometer == SOLVED || statePotentiometer == INACTIVE) {
         ledm1.drawCircle(4, 11, 2);
       } else {
         ledm1.drawRectangle(4, 11, 6, 13);
       }
-      if (stateRewiring0 == SOLVED) {
+      if (stateRewiring0 == SOLVED || stateRewiring0 == INACTIVE) {
         ledm1.drawCircle(12, 11, 2);
       } else {
         ledm1.drawRectangle(12, 11, 14, 13);
       }
-      if (stateRewiring1 == SOLVED) {
+      if (stateRewiring1 == SOLVED || stateRewiring1 == INACTIVE) {
         ledm1.drawCircle(20, 11, 2);
       } else {
         ledm1.drawRectangle(20, 11, 22, 13);
       }
-      if (stateLaserDetection == SOLVED) {
+      if (stateLaserDetection == SOLVED || stateLaserDetection == INACTIVE) {
         ledm1.drawCircle(28, 11, 2);
-        for (int i = 0; i < NUM_PIXEL; i++) {
-          // pixels.Color takes RGB values, from 0,0,0 up to 255,255,255
-          pixels.setPixelColor(
-              i, pixels.Color(0, 255, 0)); // Moderately bright green color.
-        }
-        pixels.show(); // This sends the updated pixel color to the hardware.
       } else {
         ledm1.drawRectangle(28, 11, 30, 13);
       }
@@ -517,12 +549,12 @@ void TaskControlPuzzleState(void *pvParameters) {
 void TaskPiezoButtonReadout(void *pvParameters) {
   (void)pvParameters;
   for (;;) {
-    SERIALPRINTS("TaskPiezoButtonReadout: \t");
+    // SERIALPRINTS("TaskPiezoButtonReadout: \t");
     uint16_t buttonState1 = digitalRead(BUTTON_0);
     uint16_t buttonState2 = digitalRead(BUTTON_1);
     if (buttonState1) {
       vTaskSuspend(xHandleControlPuzzleState);
-      SERIALPRINTS("Button 1 pressed\n");
+      // SERIALPRINTS("Button 1 pressed\n");
       ledm1.clear();
       // ledm1.setCharSpacing(0);
 
@@ -546,7 +578,7 @@ void TaskPiezoButtonReadout(void *pvParameters) {
       vTaskResume(xHandleControlPuzzleState);
 
     } else if (buttonState2) {
-      SERIALPRINTS("Button 2 pressed\n");
+      // SERIALPRINTS("Button 2 pressed\n");
       // e 164.81
       // d# 155.56
       float frequencies[] = {164.81, 155.56, 164.81, 155.56,
@@ -556,7 +588,7 @@ void TaskPiezoButtonReadout(void *pvParameters) {
         vTaskDelay(250);
       }
     } else {
-      SERIALPRINTS("No Button pressed\n");
+      // SERIALPRINTS("No Button pressed\n");
       ledcWriteTone(LEDC_CHANNEL1, 0);
     }
     vTaskDelay(1000);
@@ -574,21 +606,11 @@ void TaskMqttLoop(void *pvParameters) {
 void callbackLaserDetection(const char *method1, const char *state, int daten) {
   if (strcmp(method1, "trigger") == 0) {
     if (strcmp(state, "on") == 0) {
-      // rot
-      for (int i = 0; i < NUM_PIXEL; i++) {
-        pixels.setPixelColor(i, pixels.Color(255, 0, 0));
-        pixels.show();
-      }
       stateLaserDetection = ACTIVE;
       mqttCommunication->publish("7/fusebox/laserDetection", "status", "active",
                                  true);
 
     } else if (strcmp(state, "off") == 0) {
-      // keine Farbe
-      for (int i = 0; i < NUM_PIXEL; i++) {
-        pixels.setPixelColor(i, pixels.Color(0, 0, 0));
-        pixels.show();
-      }
       stateLaserDetection = INACTIVE;
       mqttCommunication->publish("7/fusebox/laserDetection", "status",
                                  "inactive", true);
@@ -598,8 +620,10 @@ void callbackLaserDetection(const char *method1, const char *state, int daten) {
       stateLaserDetection = SOLVED;
     } else if (strcmp(state, "active") == 0) {
       stateLaserDetection = ACTIVE;
+    } else if (strcmp(state, "inactive") == 0) {
+      stateLaserDetection = INACTIVE;
     }
-  } 
+  }
 }
 
 void callbackRewiring0(const char *method1, const char *state, int daten) {
@@ -618,6 +642,8 @@ void callbackRewiring0(const char *method1, const char *state, int daten) {
       stateRewiring0 = SOLVED;
     } else if (strcmp(state, "active") == 0) {
       stateRewiring0 = ACTIVE;
+    } else if (strcmp(state, "inactive") == 0) {
+      stateRewiring0 = INACTIVE;
     }
   }
 }
@@ -638,6 +664,8 @@ void callbackRewiring1(const char *method1, const char *state, int daten) {
       stateRewiring1 = SOLVED;
     } else if (strcmp(state, "active") == 0) {
       stateRewiring1 = ACTIVE;
+    } else if (strcmp(state, "inactive") == 0) {
+      stateRewiring1 = INACTIVE;
     }
   }
 }
@@ -648,20 +676,18 @@ void callbackPotentiometer(const char *method1, const char *state, int daten) {
       statePotentiometer = ACTIVE;
       mqttCommunication->publish("7/fusebox/potentiometer", "status", "active",
                                  true);
-    } else if (strcmp(state, "off") == 0 || strcmp(state, "off") == 0) {
+    } else if (strcmp(state, "off") == 0) {
       statePotentiometer = INACTIVE;
       mqttCommunication->publish("7/fusebox/potentiometer", "status",
                                  "inactive", true);
     }
   } else if (strcmp(method1, "status") == 0) {
     if (strcmp(state, "solved") == 0) {
-      seg1.transferData(0x01, 1);
-      seg1.transferData(0x02, 9);
-      seg1.transferData(0x03, 9);
-      seg1.transferData(0x04, 5);
       statePotentiometer = SOLVED;
     } else if (strcmp(state, "active") == 0) {
       statePotentiometer = ACTIVE;
+    } else if (strcmp(state, "inactive") == 0) {
+      statePotentiometer = INACTIVE;
     }
   }
 }
