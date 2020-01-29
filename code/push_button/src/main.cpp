@@ -47,21 +47,21 @@ void solved(){
 }
 
 void callback(const char* method1, const char* state, int daten) {
-  if (strcmp(method1, "TRIGGER") == 0) {
-    if (strcmp(state, "off") == 0) {
+  if (caseInSensStringCompare(method1, "TRIGGER")) {
+    if (caseInSensStringCompare(state, "off")) {
       // configure LED PWM functionalitites
         status = 0;
-        mqtt_com->publish(mqtt_topic,"STATUS", "inactive", 0);
+        mqtt_com->publish(mqtt_topic,"STATUS", "inactive", "button", 0);
       }
-    if (strcmp(state, "on") == 0) {
+    if (caseInSensStringCompare(state, "on")) {
       // configure LED PWM functionalitites
         status = 1;
-        mqtt_com->publish(mqtt_topic,"STATUS", "active", 0);
+        mqtt_com->publish(mqtt_topic,"STATUS", "active", "button", 0);
       }
     }
 
-    if (strcmp(method1, "STATUS") == 0) {
-      if (strcmp(state, "solved") == 0) {
+    if (caseInSensStringCompare(method1, "STATUS")) {
+      if (caseInSensStringCompare(state, "solved")) {
           status = 3;
           //mqtt_com->publish(mqtt_topic,"STATUS", "solved", 1);
         }
