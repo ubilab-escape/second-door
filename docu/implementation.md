@@ -23,13 +23,7 @@ In this file we are going to show and document the main implementation tasks.
 
 ## PCB
 
-
-<p align="center">
-  <img src="implementation/fusebox/fusebox_board-1.png" width=600>
-</p>
-<p align="center">
-  Figure X: design of fusebox pcb
-</p>
+In the following images, you can see the schematics of the fusebox. Page 1 shows the connections between ESP32 and all logic signals. The power supply, which is on page 2, converts 12V DC to 5V @ 3A. Connections to mechanical and optical parts of the PCB, e.g. potentiometers, pinheader, leds, buttons and piezobuzzer. The circuit of the seven segment display, which shows the setting of the potentiometers, can be seen in page 4. We used a MAX7221, a serially interfaced (SPI) 8 bit current sink, which is often used as led driver. On page 5, connections to screw terminal blocks are shown. With those, one can connect external peripheral elements to the PCB. Finally, on page 6 you can see the circuit of I2C components. We used two PCF8574 8 bit I2C I/O port expanders, and one ADS1015 12 bit 4 channel delta-sigma I2C ADC. Both port expanders are used for additional peripheral elements, e.g. readout of second rewiring puzzle, readout of additional buttons and driving some leds. An external ADC was necessary, since we couldn't use some internal ADC pins of the ESP32, because they could influence boot options on startup in case they are connected to our potentiometers.
 
 <p align="center">
   <img src="implementation/fusebox/fusebox_schematic-1.png" width=400>
@@ -40,12 +34,19 @@ In this file we are going to show and document the main implementation tasks.
   <img src="implementation/fusebox/fusebox_schematic-6.png" width=400>
 </p>
 <p align="center">
-  Figure X: Caption
+  Figure X: schematics of fusebox pcb
 </p>
 
-## Rewiring
+The shown schematic was used to design the pcb, pictured in figure XX. Initally, a 4 layer setup should be used, but to keep the price low, we decided to use a 2 layer setup, at the expense of signal quality. Reducing the number of layers was still possible, since we designed the PCB very forsighted (top/vertical and bottom/horizontal layer should have been used for signals, 2 and 15 for GND and power). The shown design contains both mounting techniques (SMD and THT), preferred package size is 0805. We ordered prototypes of this PCB at JLC PCB in China, the delivered pcbs were fully functional. After manually soldering all parts to pcb, we tested and programmed all functionality. Apart from 1 badly designed pad, everything worked fine and the board is fully functional.  
 
------>TODO<-----
+<p align="center">
+  <img src="implementation/fusebox/fusebox_board-1.png" width=600>
+</p>
+<p align="center">
+  Figure X: design of fusebox pcb
+</p>
+
+The assembled, mounted and connected pcb is shown in figure XX.
 
 ## Door
 
