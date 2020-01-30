@@ -23,14 +23,25 @@ In this file we are going to show and document the main implementation tasks.
 
 ## PCB
 
+
 <p align="center">
-  <object data="implementation/fusebox/fusebox_board.pdf" type="application/pdf" width="500px">
-    <embed src="implementation/fusebox/fusebox_board.pdf">
-    </embed>
-  </object>
+  <img src="implementation/fusebox/fusebox_board-1.png" width=600>
+</p>
+<p align="center">
+  Figure X: design of fusebox pcb
 </p>
 
-
+<p align="center">
+  <img src="implementation/fusebox/fusebox_schematic-1.png" width=200>
+  <img src="implementation/fusebox/fusebox_schematic-2.png" width=200>
+  <img src="implementation/fusebox/fusebox_schematic-3.png" width=200>
+  <img src="implementation/fusebox/fusebox_schematic-4.png" width=200>
+  <img src="implementation/fusebox/fusebox_schematic-5.png" width=200>
+  <img src="implementation/fusebox/fusebox_schematic-6.png" width=200>
+</p>
+<p align="center">
+  Figure X: Caption
+</p>
 
 ## Rewiring
 
