@@ -32,12 +32,12 @@ In this file we are going to show and document the main implementation tasks.
 </p>
 
 <p align="center">
-  <img src="implementation/fusebox/fusebox_schematic-1.png" width=200>
-  <img src="implementation/fusebox/fusebox_schematic-2.png" width=200>
-  <img src="implementation/fusebox/fusebox_schematic-3.png" width=200>
-  <img src="implementation/fusebox/fusebox_schematic-4.png" width=200>
-  <img src="implementation/fusebox/fusebox_schematic-5.png" width=200>
-  <img src="implementation/fusebox/fusebox_schematic-6.png" width=200>
+  <img src="implementation/fusebox/fusebox_schematic-1.png" width=400>
+  <img src="implementation/fusebox/fusebox_schematic-2.png" width=400>
+  <img src="implementation/fusebox/fusebox_schematic-3.png" width=400>
+  <img src="implementation/fusebox/fusebox_schematic-4.png" width=400>
+  <img src="implementation/fusebox/fusebox_schematic-5.png" width=400>
+  <img src="implementation/fusebox/fusebox_schematic-6.png" width=400>
 </p>
 <p align="center">
   Figure X: Caption
