@@ -8,7 +8,7 @@
 
 #define ROBOT_ON 18 
 
-std::string topic = "7/robot";
+const char* topic = "7/robot";
 const char *mqtt_server = "10.0.0.2";
 const char *mqtt_name = "robotClient";
 
@@ -19,12 +19,14 @@ bool robot_on = false;
 void TaskTalk2Robot(void *pvParameters);
 
 void callback(const char *method1, const char *state, int daten) {
-  if (strcmp(method1, "TRIGGER") == 0) {
-    if (strcmp(state, "on") == 0) {
+  if (caseInSensStringCompare(method1, "TRIGGER")) {
+    if (caseInSensStringCompare(state, "on")) {
       robot_on = true;
+      mqtt_com->publish(topic,"STATUS", "active", "robot", false);
     }
-    if (strcmp(state, "off") == 0) {
+    if (caseInSensStringCompare(state, "off")) {
       robot_on = false;
+      mqtt_com->publish(topic,"STATUS", "inactive", "robot", false);
     }
   }
 }
