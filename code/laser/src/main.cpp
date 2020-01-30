@@ -29,8 +29,8 @@ Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUM_PIXEL, RGB_RING_PIN, NEO_GRB + 
 MqttBase* mqtt_com;
 
 void callback(const char* method1, const char* state, int daten) {
-  if (strcmp(method1, "TRIGGER") == 0) {
-    if (strcmp(state, "on") == 0) {
+  if (caseInSensStringCompare(method1,"TRIGGER")) {
+    if (caseInSensStringCompare(state, "ON")) {
 
       ledcWrite(ledChannel, 512);
 
@@ -41,7 +41,7 @@ void callback(const char* method1, const char* state, int daten) {
       }
       mqtt_com -> publish(mqtt_topic_laser,"STATUS", "active",0);
     }
-    if (strcmp(state, "off") == 0) {
+    if (caseInSensStringCompare(state, "OFF")) {
       ledcWrite(ledChannel, 0);
 
       for (int i = 0; i < NUM_PIXEL; i++) {
