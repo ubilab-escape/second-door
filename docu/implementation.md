@@ -21,6 +21,17 @@ In this file we are going to show and document the main implementation tasks.
 </p>
 <p align="center">Figure X: Finished box with marked riddles<p align="center">
 
+## PCB
+
+<p align="center">
+  <object data="implementation/fusebox/fusebox_board.pdf" type="application/pdf" width="500px">
+    <embed src="implementation/fusebox/fusebox_board.pdf">
+    </embed>
+  </object>
+</p>
+
+
+
 ## Rewiring
 
 ----->TODO<-----
