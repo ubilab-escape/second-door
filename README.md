@@ -54,4 +54,4 @@ It is just possible to open the door from inside by pushing a button with a smal
 
 * robot controlled by ESP32 only
 * cover/coating for pcb inside fusebox
-
+* coating for fusebox
