@@ -52,6 +52,8 @@ tPuzzleState stateRewiring0;
 tPuzzleState stateRewiring1;
 tPuzzleState stateLaserDetection;
 
+bool laserDetectionInitialActivation = false;
+
 // 7 Segment
 MAX7221 seg1 = MAX7221(MAX7221_CS, 1, MAX7221::SEGMENT);
 
@@ -259,10 +261,12 @@ void TaskPotentiometer(void *pvParameters) {
         SERIALPRINT("", pValues[i]);
         SERIALPRINTS(" ");
       }
+      vTaskSuspend(xHandleControlPuzzleState);
       seg1.transferData(0x01, pValues[0]);
       seg1.transferData(0x02, pValues[1]);
       seg1.transferData(0x03, pValues[2]);
       seg1.transferData(0x04, pValues[3]);
+      vTaskResume(xHandleControlPuzzleState);
       if (pValues[0] == 1 && pValues[1] == 9 && pValues[2] == 9 &&
           pValues[3] == 5) {
         SERIALPRINTS("Potis Solved!\n");
@@ -310,6 +314,16 @@ void TaskLaserLock(void *pvParameters) {
 
     if (stateLaserDetection == ACTIVE) {
       SERIALPRINTS("ACTIVE:\tTaskLaserDetection: \t\n")
+
+      if (!laserDetectionInitialActivation == true) {
+        // Show red
+        for (int i = 0; i < NUM_PIXEL; i++) {
+          pixels.setPixelColor(i, pixels.Color(255, 0, 0));
+        }
+        pixels.show();
+        laserDetectionInitialActivation = true;
+      }
+
       static uint8_t byte_count = 0;
 
       sequence[byte_count] = digitalRead(detectorPin);
@@ -385,15 +399,15 @@ void TaskLaserLock(void *pvParameters) {
       SERIALPRINTS("INACTIVE:\tTaskLaserDetection\n")
       // Show nothing
       for (int i = 0; i < NUM_PIXEL; i++) {
-        pixels.setPixelColor(i, pixels.Color(0, 0, 0));
+        pixels.setPixelColor(i, pixels.Color(0, 255, 0));
       }
       pixels.show();
       vTaskDelay(INACTIVE_DELAY);
     } else if (stateLaserDetection == INIT) {
       SERIALPRINTS("INIT:\t\tTaskLaserDetection\n")
-      // Show red
+      // Show nothing
       for (int i = 0; i < NUM_PIXEL; i++) {
-        pixels.setPixelColor(i, pixels.Color(255, 0, 0));
+        pixels.setPixelColor(i, pixels.Color(0, 0, 0));
       }
       pixels.show();
       vTaskDelay(INIT_DELAY);
@@ -508,6 +522,44 @@ uint8_t analyse_sequence(uint8_t sequence[6], uint8_t target) {
   return target_number + 1;
 }
 
+void drawOpenPacman(uint8_t xPosition, uint8_t yPosition) {
+  ledm1.drawCircle(xPosition, yPosition, 0);
+  ledm1.drawCircle(xPosition + 1, yPosition - 1, 0);
+  ledm1.drawCircle(xPosition + 2, yPosition - 2, 0);
+  ledm1.drawCircle(xPosition + 1, yPosition - 3, 0);
+  ledm1.drawCircle(xPosition, yPosition - 3, 0);
+  ledm1.drawCircle(xPosition - 1, yPosition - 3, 0);
+  ledm1.drawCircle(xPosition - 2, yPosition - 2, 0);
+  ledm1.drawCircle(xPosition - 3, yPosition - 1, 0);
+  ledm1.drawCircle(xPosition - 3, yPosition, 0);
+  ledm1.drawCircle(xPosition - 3, yPosition + 1, 0);
+  ledm1.drawCircle(xPosition - 2, yPosition + 2, 0);
+  ledm1.drawCircle(xPosition - 1, yPosition + 3, 0);
+  ledm1.drawCircle(xPosition - 1, yPosition + 3, 0);
+  ledm1.drawCircle(xPosition, yPosition + 3, 0);
+  ledm1.drawCircle(xPosition + 1, yPosition + 3, 0);
+  ledm1.drawCircle(xPosition + 2, yPosition + 2, 0);
+  ledm1.drawCircle(xPosition + 1, yPosition + 1, 0);
+}
+
+void drawClosedPacman(uint8_t xPosition, uint8_t yPosition) {
+  ledm1.drawCircle(xPosition, yPosition, 3);
+}
+
+void drawPointsPacman(uint8_t xPosition, uint8_t yPosition) {
+  for (uint8_t i = xPosition + 2; i < 31; i++) {
+    if (i % 2 == 0) {
+      ledm1.drawCircle(i, yPosition, 0);
+    }
+  }
+}
+
+uint8_t pacmanX = 27;
+uint8_t pacmanY = 3;
+
+typedef enum PacmanState { OPEN, CLOSED } tPacmanState;
+tPacmanState pacmanState = CLOSED;
+
 void TaskControlPuzzleState(void *pvParameters) {
   (void)pvParameters;
   for (;;) {
@@ -521,28 +573,51 @@ void TaskControlPuzzleState(void *pvParameters) {
 
       ledm1.clear();
       if (statePotentiometer == SOLVED || statePotentiometer == INACTIVE) {
-        ledm1.drawCircle(4, 11, 2);
+        ledm1.drawLine(1, 10, 5, 14);
+        ledm1.drawLine(5, 14, 7, 12);
       } else {
-        ledm1.drawRectangle(4, 11, 6, 13);
+        ledm1.drawLine(1, 9, 6, 14);
+        ledm1.drawLine(1, 14, 6, 9);
       }
       if (stateRewiring0 == SOLVED || stateRewiring0 == INACTIVE) {
-        ledm1.drawCircle(12, 11, 2);
+        ledm1.drawLine(9, 10, 13, 14);
+        ledm1.drawLine(13, 14, 15, 12);
       } else {
-        ledm1.drawRectangle(12, 11, 14, 13);
+        ledm1.drawLine(9, 9, 14, 14);
+        ledm1.drawLine(9, 14, 14, 9);
       }
       if (stateRewiring1 == SOLVED || stateRewiring1 == INACTIVE) {
-        ledm1.drawCircle(20, 11, 2);
+        ledm1.drawLine(17, 10, 21, 14);
+        ledm1.drawLine(21, 14, 23, 12);
       } else {
-        ledm1.drawRectangle(20, 11, 22, 13);
+        ledm1.drawLine(17, 9, 22, 14);
+        ledm1.drawLine(17, 14, 22, 9);
       }
       if (stateLaserDetection == SOLVED || stateLaserDetection == INACTIVE) {
-        ledm1.drawCircle(28, 11, 2);
+        ledm1.drawLine(25, 10, 29, 14);
+        ledm1.drawLine(29, 14, 31, 12);
       } else {
-        ledm1.drawRectangle(28, 11, 30, 13);
+        ledm1.drawLine(25, 9, 30, 14);
+        ledm1.drawLine(25, 14, 30, 9);
+      }
+
+      // PACMAN
+      if (pacmanState == tPacmanState::CLOSED) {
+        drawOpenPacman(pacmanX, pacmanY);
+        pacmanState = tPacmanState::OPEN;
+        drawPointsPacman(pacmanX, pacmanY);
+      } else if (pacmanState == tPacmanState::OPEN) {
+        drawClosedPacman(pacmanX, pacmanY);
+        pacmanState = tPacmanState::CLOSED;
+      }
+      pacmanX++;
+
+      if (pacmanX == 29) {
+        pacmanX = 3;
       }
     }
 
-    vTaskDelay(300);
+    vTaskDelay(200);
   }
 }
 
@@ -563,9 +638,6 @@ void TaskPiezoButtonReadout(void *pvParameters) {
       ledm1.drawHLine(1, 30, 0);
       ledm1.drawText(30, 3, "STRANGER", MD_MAXPanel::ROT_180);
       ledm1.drawText(26, 9, "THINGS", MD_MAXPanel::ROT_180);
-      // ledm1.drawHLine(4, 0, 2);
-      // ledm1.drawHLine(4, 26, 28);
-      // ledm1.setCharSpacing(1);
 
       float frequencies[] = {130.81, 164.81, 196.0, 246.94,
                              261.63, 246.94, 196.0, 164.81};
@@ -575,6 +647,7 @@ void TaskPiezoButtonReadout(void *pvParameters) {
       }
 
       ledm1.clear();
+      vTaskDelay(1000);
       vTaskResume(xHandleControlPuzzleState);
 
     } else if (buttonState2) {
