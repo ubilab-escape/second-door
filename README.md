@@ -80,4 +80,4 @@ const char* password = "";
 
 * robot controlled by ESP32 only
 * cover/coating for pcb inside fusebox
-
+* coating for fusebox
