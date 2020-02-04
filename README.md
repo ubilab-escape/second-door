@@ -74,6 +74,12 @@ const char* ssid = "";
 const char* password = "";
 ```
 
+If you want to get the serial output for connection information define in the main.cpp file:
+
+```cpp
+#define DEBUG
+```
+
 
 
 # Future work
