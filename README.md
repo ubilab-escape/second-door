@@ -1,12 +1,14 @@
 [![Build Status](https://travis-ci.com/ubilab-escape/second-door.svg?branch=master)](https://travis-ci.com/ubilab-escape/second-door)
 
-- [second-door](#second-door)
+- [Riddles](#Riddles)
   * [Stage 1 - Breaking the lock of the fusebox](#stage-1---breaking-the-lock-of-the-fusebox)
   * [Stage 2 - Restoring the power supply for the robot](#stage-2---restoring-the-power-supply-for-the-robot)
   * [Stage 3 - Breaking door by robot](#stage-3---breaking-door-by-robot)
+- [Communication](#Communication)
+- [How to](#How-to)
 - [Future work](#future-work)
 
-# second-door
+# Riddles
 
 The main concept is visualized in the figure below.
 
@@ -49,6 +51,30 @@ It is just possible to open the door from inside by pushing a button with a smal
 <img src="/docu/readme/robot.jpeg" width=400>
 </p>
 <p align="center">Figure 4: Robot<p align="center">
+
+# Communication
+
+To standardize the communication for all devices and make the handling as easy as possible we implemented the [MqttBase](https://github.com/JayWiz/MqttBase). Each device for the above riddles make use of this class. The class is embedded as sub repository.
+
+# How to
+
+The project is structured in four folder:
+
+| Folder 	| Description 	|
+|------	|---------------------|
+[3D-files](https://github.com/ubilab-escape/second-door/tree/master/3D-files) | Contrains all .stp and .stl files for the designed cases |
+[code](https://github.com/ubilab-escape/second-door/tree/master/code)| The .io files with all the code for each riddle |
+[docu](https://github.com/ubilab-escape/second-door/tree/master/docu) | More detailed information about the implementation |
+[pcb](https://github.com/ubilab-escape/second-door/tree/master/pcb) | The schematic and layout for the designed pcb |
+
+The easiest way to work/compile/upload the code is to get [vs code](https://code.visualstudio.com/) and install [PlatfomIO](https://platformio.org/install/ide?install=vscode) as extension. The dependencies of each project are declared within the "lib_deps". The only missing part is the "wifi_secure.h" file which has to be created by the user. The file must contain:
+
+```cpp
+const char* ssid = "";
+const char* password = "";
+```
+
+
 
 # Future work
 
