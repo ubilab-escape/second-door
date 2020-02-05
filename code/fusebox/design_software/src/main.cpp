@@ -7,13 +7,21 @@
 #include "serial_debug.h"
 #include "wifi_secure.h"
 #include <Adafruit_ADS1015.h>
-#include <Adafruit_NeoPixel.h>
+// #include <Adafruit_NeoPixel.h>
+#include <NeoPixelBus.h>
 #include <Arduino.h>
 #include <MD_MAX72xx.h>
 #include <MD_MAXPanel.h>
 #include <MqttBase.h>
 #include <pcf8574_esp.h>
 #include <vector>
+
+#define colorSaturation 128
+RgbColor red(colorSaturation, 0, 0);
+RgbColor green(0, colorSaturation, 0);
+RgbColor blue(0, 0, colorSaturation);
+RgbColor white(colorSaturation);
+RgbColor black(0);
 
 #if CONFIG_FREERTOS_UNICORE
 #define ARDUINO_RUNNING_CORE 0
@@ -61,8 +69,9 @@ MAX7221 seg1 = MAX7221(MAX7221_CS, 1, MAX7221::SEGMENT);
 MD_MAXPanel ledm1 = MD_MAXPanel(MD_MAX72XX::FC16_HW, MAX7219_CS, 4, 2);
 
 // Led Ring
-Adafruit_NeoPixel pixels =
-    Adafruit_NeoPixel(NUM_PIXEL, RGB_RING_PIN, NEO_GRB + NEO_KHZ800);
+NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> pixels(NUM_PIXEL, RGB_RING_PIN);
+// Adafruit_NeoPixel pixels =
+//     Adafruit_NeoPixel(NUM_PIXEL, RGB_RING_PIN, NEO_GRB + NEO_KHZ800);
 uint8_t sequence[6];
 uint8_t numberOfSequences = 0;
 int old_time_in_ms = millis();
@@ -204,14 +213,14 @@ void initRewiring(void) {
 void initLaserDetection(void) {
   Serial.print("Setup LED Ring ... ");
   // set led ring to red
-  pixels.begin();
-  pixels.setBrightness(100); // die Helligkeit setzen 0 dunke -> 255 ganz hell
-  pixels.show();             // Alle NeoPixel sind im status "aus".
+  pixels.Begin();
+  //pixels.SetBrightness(100); // die Helligkeit setzen 0 dunke -> 255 ganz hell
+  pixels.Show();             // Alle NeoPixel sind im status "aus".
 
   // no color in init
   for (int i = 0; i < NUM_PIXEL; i++) {
-    pixels.setPixelColor(i, pixels.Color(0, 0, 0));
-    pixels.show();
+    pixels.SetPixelColor(i, black);
+    pixels.Show();
   }
   pinMode(detectorPin, INPUT); // Laser Detector als Eingangssignal setzen
   pinMode(LOCK_0, OUTPUT);     // Lock als Ausgang setzen
@@ -318,9 +327,9 @@ void TaskLaserLock(void *pvParameters) {
       if (!laserDetectionInitialActivation == true) {
         // Show red
         for (int i = 0; i < NUM_PIXEL; i++) {
-          pixels.setPixelColor(i, pixels.Color(255, 0, 0));
+          pixels.SetPixelColor(i, red);
         }
-        pixels.show();
+        pixels.Show();
         laserDetectionInitialActivation = true;
       }
 
@@ -349,9 +358,9 @@ void TaskLaserLock(void *pvParameters) {
       // check if new additional LED shoulb set to green
       if ((numberOfSequences % 2 == 0) && (numberOfSequences > 0)) {
         uint8_t RGB_led = (uint8_t)numberOfSequences / 2;
-        pixels.setPixelColor(
-            RGB_led, pixels.Color(0, 255, 0)); // Moderately bright green color.
-        pixels.show(); // This sends the updated pixel color to the hardware.
+        pixels.SetPixelColor(
+            RGB_led, green); // Moderately bright green color.
+        pixels.Show(); // This sends the updated pixel color to the hardware.
       }
 
       // check if puzzle is solved
@@ -376,9 +385,9 @@ void TaskLaserLock(void *pvParameters) {
         if (numberOfSequences > 0) {
           if (numberOfSequences % 2 == 0) {
             uint8_t RGB_led = (uint8_t)numberOfSequences / 2;
-            pixels.setPixelColor(RGB_led,
-                                 pixels.Color(255, 0, 0)); // set led to red
-            pixels.show();
+            pixels.SetPixelColor(RGB_led,
+                                 red); // set led to red
+            pixels.Show();
           }
           numberOfSequences--; // count down sequence if max time was reached
         }
@@ -391,25 +400,25 @@ void TaskLaserLock(void *pvParameters) {
       SERIALPRINTS("SOLVED:\t\tTaskLaserDetection\n")
       // Show Solution
       for (int i = 0; i < NUM_PIXEL; i++) {
-        pixels.setPixelColor(i, pixels.Color(0, 255, 0));
+        pixels.SetPixelColor(i, green);
       }
-      pixels.show();
+      pixels.Show();
       vTaskDelay(SOLVED_DELAY);
     } else if (stateLaserDetection == INACTIVE) {
       SERIALPRINTS("INACTIVE:\tTaskLaserDetection\n")
       // Show nothing
       for (int i = 0; i < NUM_PIXEL; i++) {
-        pixels.setPixelColor(i, pixels.Color(0, 255, 0));
+        pixels.SetPixelColor(i, green);
       }
-      pixels.show();
+      pixels.Show();
       vTaskDelay(INACTIVE_DELAY);
     } else if (stateLaserDetection == INIT) {
       SERIALPRINTS("INIT:\t\tTaskLaserDetection\n")
       // Show nothing
       for (int i = 0; i < NUM_PIXEL; i++) {
-        pixels.setPixelColor(i, pixels.Color(0, 0, 0));
+        pixels.SetPixelColor(i, black);
       }
-      pixels.show();
+      pixels.Show();
       vTaskDelay(INIT_DELAY);
     }
   }
@@ -496,16 +505,16 @@ void blink_ring(uint8_t blinking_number, uint8_t frequency) {
   for (uint8_t k = 0; k < blinking_number; k++) {
     for (int i = 0; i < NUM_PIXEL; i++) {
       // pixels.Color takes RGB values, from 0,0,0 up to 255,255,255
-      pixels.setPixelColor(
-          i, pixels.Color(0, 0, 0)); // Moderately bright green color.
-      pixels.show(); // This sends the updated pixel color to the hardware.
+      pixels.SetPixelColor(
+          i, black); // Moderately bright green color.
+      pixels.Show(); // This sends the updated pixel color to the hardware.
     }
     delay(period / 2);
     for (int i = 0; i < NUM_PIXEL; i++) {
       // pixels.Color takes RGB values, from 0,0,0 up to 255,255,255
-      pixels.setPixelColor(
-          i, pixels.Color(0, 255, 0)); // Moderately bright green color.
-      pixels.show(); // This sends the updated pixel color to the hardware.
+      pixels.SetPixelColor(
+          i, green); // Moderately bright green color.
+      pixels.Show(); // This sends the updated pixel color to the hardware.
     }
     delay(period / 2);
   }
@@ -680,6 +689,7 @@ void callbackLaserDetection(const char *method1, const char *state, int daten) {
   if (strcmp(method1, "trigger") == 0) {
     if (strcmp(state, "on") == 0) {
       stateLaserDetection = ACTIVE;
+      laserDetectionInitialActivation = false;
       mqttCommunication->publish("7/fusebox/laserDetection", "status", "active",
                                  true);
 
