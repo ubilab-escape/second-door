@@ -694,6 +694,10 @@ void callbackLaserDetection(const char *method1, const char *state, int daten) {
                                  true);
 
     } else if (strcmp(state, "off") == 0) {
+      // open LOCK
+      digitalWrite(LOCK_0, HIGH);
+      vTaskDelay(1000);
+      digitalWrite(LOCK_0, LOW);
       stateLaserDetection = INACTIVE;
       mqttCommunication->publish("7/fusebox/laserDetection", "status",
                                  "inactive", true);
