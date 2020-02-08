@@ -62,7 +62,7 @@ void setup() {
   pinMode(BATTERY_LOW, INPUT);
   pinMode(ROBOT_ON, OUTPUT);
   /// keep robot off at begining
-  digitalWrite(ROBOT_ON, LOW);
+  digitalWrite(ROBOT_ON, HIGH);
 
   /// communication intitialization
   std::vector<std::shared_ptr<std::string>> mqtt_topics;
