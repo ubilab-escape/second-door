@@ -77,11 +77,9 @@ The white circle shown in the figure below is lighted with LEDs. This is going t
 
 Inside the laser there is an ESP32 which controls the laser by means of PWM. The line to the laser is interrupted by a button that must be pressed to switch on the laser. For the control of the LEDs the neopixel library from Adafruit is used. Switching on is done via communication. In the "off" state, neither the laser can be activated via the button nor the LEDs are switched off. In "on" state the LED ring is set to red and the PWM is connected to the pin of the ESP32.
 
-Translated with www.DeepL.com/Translator (free version)
-
 # Button to open door
 
-To open the door a button has to be pushed with the robot. The button needs to communicate with the rest of the room. To give a hint it should be possible to light it up.
+Inside the laser is an ESP32. If it receives "trigger" "on" the button lights up. If it receives "trigger" "off" the button goes out. If the button is pressed, "solved" is sent and the button will look until it receives a "trigger" "off".
 
 <p align="center"> 
 <img src="implementation/button/red_push_button.jpg" width=300>
