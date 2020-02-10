@@ -57,7 +57,12 @@ The laser is used to melt the lock. [LED ring](https://www.adafruit.com/product/
 </p>
 <p align="center">Figure X: LEDs for indicating status of melting lock process<p align="center">
   
-When the laser beam hits the sensor, the LEDs change from red to green one after the other. If nothing is detected by the sensor, the LEDs turn red again to simulate cooling.
+The laser beam is diverted by the mirrors and hits the detector visible below. The detector is equipped with a photodiode and an integrated comparator, which outputs a logical one when it detects a laser beam. The high response time of the diode allows to modulate a frequency to the laser and to detect this. The frequency is needed to prevent the puzzle from being bypassed by a flashlight. The signal is passed to an input of the ESP32 and this is sampled. A sequence of six samples is stored and checked for the equivalent number and order of zeros and ones. If this is given, the first LED of the ring is set to green. This is repeated until all sixteen LED's are green. Then the LED ring flashes three times to signal that the puzzle is solved. To increase the difficulty, a green LED is set to red again after one second to increase the difficulty.
+
+<p align="center"> 
+<img src="implementation/fusebox/laser_sensor.jpg" width=400>
+</p>
+<p align="center">Figure X: Sensor to detect the laser beam<p align="center">
 
 # Laser + Box
 
