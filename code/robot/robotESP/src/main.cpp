@@ -112,7 +112,7 @@ void TaskCheckBattery(void *pvParameters) {
     voltage = (3.0f/2.0f) * 3.3 * ((float)pinVoltage/2048.0f);
     batLow = analogRead(BATTERY_LOW);
     batLow = 3.3 * ((float)batLow/2048.0f);
-    if (batLow < 2.0) {
+    if (batLow > 1.2) {
       std::string str = "robot battery too low : " + to_string(voltage);
       mqtt_com->publish(topic, "STATUS", "failed", str.c_str(), false);
     }
