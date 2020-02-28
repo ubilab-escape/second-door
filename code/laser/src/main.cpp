@@ -1,17 +1,15 @@
 #include <Arduino.h>
-
 #include <Adafruit_NeoPixel.h>
 #include "wifi_secure.h"
-
 #include <vector>
 #include "MqttBase.h"
 
-// const char* mqtt_topic = "7/laser";
+// MQTT settings
 const char* mqtt_server = "10.0.0.2";
 const char* mqtt_name = "LaserClient";
 const char* mqtt_topic_laser = "7/laser";
 
-
+//define IO
 #define LASER_PIN 21
 #define SEQUENDE_SIZE 5
 
@@ -26,11 +24,16 @@ const int duty_50 = 512;
 #define NUM_PIXEL 13
 Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUM_PIXEL, RGB_RING_PIN, NEO_GRB + NEO_KHZ800);
 
+//init Communication
 MqttBase* mqtt_com;
 
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//Callback for MQTT
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void callback(const char* method1, const char* state, int daten) {
-  if (strcmp(method1, "TRIGGER") == 0) {
-    if (strcmp(state, "on") == 0) {
+  if (caseInSensStringCompare(method1,"TRIGGER")) {
+    if (caseInSensStringCompare(state, "ON")) {
 
       ledcWrite(ledChannel, 512);
 
@@ -41,7 +44,7 @@ void callback(const char* method1, const char* state, int daten) {
       }
       mqtt_com -> publish(mqtt_topic_laser,"STATUS", "active",0);
     }
-    if (strcmp(state, "off") == 0) {
+    if (caseInSensStringCompare(state, "OFF")) {
       ledcWrite(ledChannel, 0);
 
       for (int i = 0; i < NUM_PIXEL; i++) {
@@ -55,9 +58,9 @@ void callback(const char* method1, const char* state, int daten) {
   }
 }
 
-// Setup
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//Setup
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void setup() {
   Serial.begin(115200);
   // fill up vector with all topic names
@@ -91,5 +94,4 @@ void setup() {
 void loop() {
   mqtt_com->loop();
   delay(100);
-  // mqtt_com->publish("STATUS", "solved");
 }
