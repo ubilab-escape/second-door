@@ -1,25 +1,23 @@
 # Implementaion
 
-In this file we are going to show and document the main implementation tasks.
+In this file we are going to show and document the main implementation tasks. [Here](https://github.com/ubilab-escape/second-door/projects/2) you can see the project progress and the issues we worked on.
 
 # General
 
+The communication structure for all devices is listed in the figure below. 
 <p align="center"> 
 <img src="implementation/communication_structure.jpg" width=400>
 </p>
 <p align="center">Figure 1: Visualization for the communication structure<p align="center">
 
-# Fuse Box
+As you can see, all devices communicate with the server, except the controller.
 
+# Fuse Box
+The design of the fusebox is visualized in the following figure.
 <p align="center"> 
 <img src="implementation/fusebox/fuse_box.PNG" width=400>
 </p>
-<p align="center">Figure X: Design fuse box<p align="center">
-
-<p align="center"> 
-<img src="implementation/fusebox/finished_box.jpg" width=400>
-</p>
-<p align="center">Figure X: Finished box with marked riddles<p align="center">
+<p align="center">Figure 2: Design fuse box<p align="center">
 
 ## PCB
 
@@ -34,7 +32,7 @@ In the following images, you can see the schematics of the fusebox. Page 1 shows
   <img src="implementation/fusebox/fusebox_schematic-6.png" width=400>
 </p>
 <p align="center">
-  Figure X: schematics of fusebox pcb
+  Figure 3: schematics of fusebox pcb
 </p>
 
 The shown schematic was used to design the pcb, pictured in figure XX. Initally, a 4 layer setup should be used, but to keep the price low, we decided to use a 2 layer setup, at the expense of signal quality. Reducing the number of layers was still possible, since we designed the PCB very forsighted (top/vertical and bottom/horizontal layer should have been used for signals, 2 and 15 for GND and power). The shown design contains both mounting techniques (SMD and THT), preferred package size is 0805. We ordered prototypes of this PCB at JLC PCB in China, the delivered pcbs were fully functional. After manually soldering all parts to pcb, we tested and programmed all functionality. Apart from 1 badly designed pad, everything worked fine and the board is fully functional.  
@@ -43,7 +41,7 @@ The shown schematic was used to design the pcb, pictured in figure XX. Initally,
   <img src="implementation/fusebox/fusebox_board-1.png" width=600>
 </p>
 <p align="center">
-  Figure X: design of fusebox pcb
+  Figure 4: design of fusebox pcb
 </p>
 
 The assembled, mounted and connected pcb is shown in figure XX.
@@ -55,14 +53,14 @@ The laser is used to melt the lock. [LED ring](https://www.adafruit.com/product/
 <p align="center"> 
 <img src="implementation/fusebox/led_ring.jpg" width=400>
 </p>
-<p align="center">Figure X: LEDs for indicating status of melting lock process<p align="center">
+<p align="center">Figure 5: LEDs for indicating status of melting lock process<p align="center">
   
 The laser beam is diverted by the mirrors and hits the detector visible below. The detector is equipped with a photodiode and an integrated comparator, which outputs a logical one when it detects a laser beam. The high response time of the diode allows to modulate a frequency to the laser and to detect this. The frequency is needed to prevent the puzzle from being bypassed by a flashlight. The signal is passed to an input of the ESP32 and this is sampled. A sequence of six samples is stored and checked for the equivalent number and order of zeros and ones. If this is given, the first LED of the ring is set to green. This is repeated until all sixteen LED's are green. Then the LED ring flashes three times to signal that the puzzle is solved. To increase the difficulty, a green LED is set to red again after one second to increase the difficulty.
 
 <p align="center"> 
 <img src="implementation/fusebox/laser_sensor.png" width=400>
 </p>
-<p align="center">Figure X: Sensor to detect the laser beam<p align="center">
+<p align="center">Figure 6: Sensor to detect the laser beam<p align="center">
 
 # Laser + Box
 
@@ -73,7 +71,7 @@ The white circle shown in the figure below is lighted with LEDs. This is going t
 <p align="center"> 
 <img src="implementation/laser/laser.jpg" width=400>
 </p>
-<p align="center">Figure X: Case for laserdiode<p align="center">
+<p align="center">Figure 7: Case for laserdiode<p align="center">
 
 Inside the laser there is an ESP32 which controls the laser by means of PWM. The line to the laser is interrupted by a button that must be pressed to switch on the laser. For the control of the LEDs the neopixel library from Adafruit is used. Switching on is done via communication. In the "off" state, neither the laser can be activated via the button nor the LEDs are switched off. In "on" state the LED ring is set to red and the PWM is connected to the pin of the ESP32.
 
@@ -84,7 +82,7 @@ Inside the laser is an ESP32. If it receives "trigger" "on" the button lights up
 <p align="center"> 
 <img src="implementation/button/red_push_button.jpg" width=300>
 </p>
-<p align="center">Figure X: Push button to open the door inside the server room<p align="center">
+<p align="center">Figure 8: Push button to open the door inside the server room<p align="center">
 
 # Cat flap
 
@@ -106,18 +104,18 @@ The robot will be controlled with an wireless PS2 controller which is attached t
   <img src="implementation/robot/ps2_controller_pinout.png" width="264" /> 
 </p>
 
-<p align="center">Figure X: PS2 controller wireless with pinout<p align="center">
+<p align="center">Figure 9: PS2 controller wireless with pinout<p align="center">
 
 As chassis for the robot an old prototype from the university is used. There is already some electronic to controll the two dc-motors.
 
 <p align="center"> 
 <img src="implementation/robot/engine_control_robot.png" width=400>
 </p>
-<p align="center">Figure X: Pinout for existing robot electronic<p align="center">
+<p align="center">Figure 10: Pinout for existing robot electronic<p align="center">
 
 The pins "motor A1" and "motor A2" are used to controll the left wheel of the robot. Pins "motor B1" and "motor B2" for the right wheel. A LED is used to visualize if the battery of the robot is low. Furthermore there are LEDs "arround" the robot to attract attention of the participants.
 
 <p align="center"> 
 <img src="implementation/robot/robot.jpeg" width=400>
 </p>
-<p align="center">Figure X: Robot with LEDs<p align="center">
+<p align="center">Figure 11: Robot with LEDs<p align="center">
