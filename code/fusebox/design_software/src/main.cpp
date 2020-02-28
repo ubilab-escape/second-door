@@ -7,13 +7,21 @@
 #include "serial_debug.h"
 #include "wifi_secure.h"
 #include <Adafruit_ADS1015.h>
-#include <Adafruit_NeoPixel.h>
+// #include <Adafruit_NeoPixel.h>
+#include <NeoPixelBus.h>
 #include <Arduino.h>
 #include <MD_MAX72xx.h>
 #include <MD_MAXPanel.h>
 #include <MqttBase.h>
 #include <pcf8574_esp.h>
 #include <vector>
+
+#define colorSaturation 128
+RgbColor red(colorSaturation, 0, 0);
+RgbColor green(0, colorSaturation, 0);
+RgbColor blue(0, 0, colorSaturation);
+RgbColor white(colorSaturation);
+RgbColor black(0);
 
 #if CONFIG_FREERTOS_UNICORE
 #define ARDUINO_RUNNING_CORE 0
@@ -52,6 +60,8 @@ tPuzzleState stateRewiring0;
 tPuzzleState stateRewiring1;
 tPuzzleState stateLaserDetection;
 
+bool laserDetectionInitialActivation = false;
+
 // 7 Segment
 MAX7221 seg1 = MAX7221(MAX7221_CS, 1, MAX7221::SEGMENT);
 
@@ -59,8 +69,9 @@ MAX7221 seg1 = MAX7221(MAX7221_CS, 1, MAX7221::SEGMENT);
 MD_MAXPanel ledm1 = MD_MAXPanel(MD_MAX72XX::FC16_HW, MAX7219_CS, 4, 2);
 
 // Led Ring
-Adafruit_NeoPixel pixels =
-    Adafruit_NeoPixel(NUM_PIXEL, RGB_RING_PIN, NEO_GRB + NEO_KHZ800);
+NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> pixels(NUM_PIXEL, RGB_RING_PIN);
+// Adafruit_NeoPixel pixels =
+//     Adafruit_NeoPixel(NUM_PIXEL, RGB_RING_PIN, NEO_GRB + NEO_KHZ800);
 uint8_t sequence[6];
 uint8_t numberOfSequences = 0;
 int old_time_in_ms = millis();
@@ -202,14 +213,14 @@ void initRewiring(void) {
 void initLaserDetection(void) {
   Serial.print("Setup LED Ring ... ");
   // set led ring to red
-  pixels.begin();
-  pixels.setBrightness(100); // die Helligkeit setzen 0 dunke -> 255 ganz hell
-  pixels.show();             // Alle NeoPixel sind im status "aus".
+  pixels.Begin();
+  //pixels.SetBrightness(100); // die Helligkeit setzen 0 dunke -> 255 ganz hell
+  pixels.Show();             // Alle NeoPixel sind im status "aus".
 
   // no color in init
   for (int i = 0; i < NUM_PIXEL; i++) {
-    pixels.setPixelColor(i, pixels.Color(0, 0, 0));
-    pixels.show();
+    pixels.SetPixelColor(i, black);
+    pixels.Show();
   }
   pinMode(detectorPin, INPUT); // Laser Detector als Eingangssignal setzen
   pinMode(LOCK_0, OUTPUT);     // Lock als Ausgang setzen
@@ -259,10 +270,12 @@ void TaskPotentiometer(void *pvParameters) {
         SERIALPRINT("", pValues[i]);
         SERIALPRINTS(" ");
       }
+      vTaskSuspend(xHandleControlPuzzleState);
       seg1.transferData(0x01, pValues[0]);
       seg1.transferData(0x02, pValues[1]);
       seg1.transferData(0x03, pValues[2]);
       seg1.transferData(0x04, pValues[3]);
+      vTaskResume(xHandleControlPuzzleState);
       if (pValues[0] == 1 && pValues[1] == 9 && pValues[2] == 9 &&
           pValues[3] == 5) {
         SERIALPRINTS("Potis Solved!\n");
@@ -310,6 +323,16 @@ void TaskLaserLock(void *pvParameters) {
 
     if (stateLaserDetection == ACTIVE) {
       SERIALPRINTS("ACTIVE:\tTaskLaserDetection: \t\n")
+
+      if (!laserDetectionInitialActivation == true) {
+        // Show red
+        for (int i = 0; i < NUM_PIXEL; i++) {
+          pixels.SetPixelColor(i, red);
+        }
+        pixels.Show();
+        laserDetectionInitialActivation = true;
+      }
+
       static uint8_t byte_count = 0;
 
       sequence[byte_count] = digitalRead(detectorPin);
@@ -335,9 +358,9 @@ void TaskLaserLock(void *pvParameters) {
       // check if new additional LED shoulb set to green
       if ((numberOfSequences % 2 == 0) && (numberOfSequences > 0)) {
         uint8_t RGB_led = (uint8_t)numberOfSequences / 2;
-        pixels.setPixelColor(
-            RGB_led, pixels.Color(0, 255, 0)); // Moderately bright green color.
-        pixels.show(); // This sends the updated pixel color to the hardware.
+        pixels.SetPixelColor(
+            RGB_led, green); // Moderately bright green color.
+        pixels.Show(); // This sends the updated pixel color to the hardware.
       }
 
       // check if puzzle is solved
@@ -362,9 +385,9 @@ void TaskLaserLock(void *pvParameters) {
         if (numberOfSequences > 0) {
           if (numberOfSequences % 2 == 0) {
             uint8_t RGB_led = (uint8_t)numberOfSequences / 2;
-            pixels.setPixelColor(RGB_led,
-                                 pixels.Color(255, 0, 0)); // set led to red
-            pixels.show();
+            pixels.SetPixelColor(RGB_led,
+                                 red); // set led to red
+            pixels.Show();
           }
           numberOfSequences--; // count down sequence if max time was reached
         }
@@ -377,25 +400,25 @@ void TaskLaserLock(void *pvParameters) {
       SERIALPRINTS("SOLVED:\t\tTaskLaserDetection\n")
       // Show Solution
       for (int i = 0; i < NUM_PIXEL; i++) {
-        pixels.setPixelColor(i, pixels.Color(0, 255, 0));
+        pixels.SetPixelColor(i, green);
       }
-      pixels.show();
+      pixels.Show();
       vTaskDelay(SOLVED_DELAY);
     } else if (stateLaserDetection == INACTIVE) {
       SERIALPRINTS("INACTIVE:\tTaskLaserDetection\n")
       // Show nothing
       for (int i = 0; i < NUM_PIXEL; i++) {
-        pixels.setPixelColor(i, pixels.Color(0, 0, 0));
+        pixels.SetPixelColor(i, green);
       }
-      pixels.show();
+      pixels.Show();
       vTaskDelay(INACTIVE_DELAY);
     } else if (stateLaserDetection == INIT) {
       SERIALPRINTS("INIT:\t\tTaskLaserDetection\n")
-      // Show red
+      // Show nothing
       for (int i = 0; i < NUM_PIXEL; i++) {
-        pixels.setPixelColor(i, pixels.Color(255, 0, 0));
+        pixels.SetPixelColor(i, black);
       }
-      pixels.show();
+      pixels.Show();
       vTaskDelay(INIT_DELAY);
     }
   }
@@ -482,16 +505,16 @@ void blink_ring(uint8_t blinking_number, uint8_t frequency) {
   for (uint8_t k = 0; k < blinking_number; k++) {
     for (int i = 0; i < NUM_PIXEL; i++) {
       // pixels.Color takes RGB values, from 0,0,0 up to 255,255,255
-      pixels.setPixelColor(
-          i, pixels.Color(0, 0, 0)); // Moderately bright green color.
-      pixels.show(); // This sends the updated pixel color to the hardware.
+      pixels.SetPixelColor(
+          i, black); // Moderately bright green color.
+      pixels.Show(); // This sends the updated pixel color to the hardware.
     }
     delay(period / 2);
     for (int i = 0; i < NUM_PIXEL; i++) {
       // pixels.Color takes RGB values, from 0,0,0 up to 255,255,255
-      pixels.setPixelColor(
-          i, pixels.Color(0, 255, 0)); // Moderately bright green color.
-      pixels.show(); // This sends the updated pixel color to the hardware.
+      pixels.SetPixelColor(
+          i, green); // Moderately bright green color.
+      pixels.Show(); // This sends the updated pixel color to the hardware.
     }
     delay(period / 2);
   }
@@ -508,6 +531,44 @@ uint8_t analyse_sequence(uint8_t sequence[6], uint8_t target) {
   return target_number + 1;
 }
 
+void drawOpenPacman(uint8_t xPosition, uint8_t yPosition) {
+  ledm1.drawCircle(xPosition, yPosition, 0);
+  ledm1.drawCircle(xPosition + 1, yPosition - 1, 0);
+  ledm1.drawCircle(xPosition + 2, yPosition - 2, 0);
+  ledm1.drawCircle(xPosition + 1, yPosition - 3, 0);
+  ledm1.drawCircle(xPosition, yPosition - 3, 0);
+  ledm1.drawCircle(xPosition - 1, yPosition - 3, 0);
+  ledm1.drawCircle(xPosition - 2, yPosition - 2, 0);
+  ledm1.drawCircle(xPosition - 3, yPosition - 1, 0);
+  ledm1.drawCircle(xPosition - 3, yPosition, 0);
+  ledm1.drawCircle(xPosition - 3, yPosition + 1, 0);
+  ledm1.drawCircle(xPosition - 2, yPosition + 2, 0);
+  ledm1.drawCircle(xPosition - 1, yPosition + 3, 0);
+  ledm1.drawCircle(xPosition - 1, yPosition + 3, 0);
+  ledm1.drawCircle(xPosition, yPosition + 3, 0);
+  ledm1.drawCircle(xPosition + 1, yPosition + 3, 0);
+  ledm1.drawCircle(xPosition + 2, yPosition + 2, 0);
+  ledm1.drawCircle(xPosition + 1, yPosition + 1, 0);
+}
+
+void drawClosedPacman(uint8_t xPosition, uint8_t yPosition) {
+  ledm1.drawCircle(xPosition, yPosition, 3);
+}
+
+void drawPointsPacman(uint8_t xPosition, uint8_t yPosition) {
+  for (uint8_t i = xPosition + 2; i < 31; i++) {
+    if (i % 2 == 0) {
+      ledm1.drawCircle(i, yPosition, 0);
+    }
+  }
+}
+
+uint8_t pacmanX = 27;
+uint8_t pacmanY = 3;
+
+typedef enum PacmanState { OPEN, CLOSED } tPacmanState;
+tPacmanState pacmanState = CLOSED;
+
 void TaskControlPuzzleState(void *pvParameters) {
   (void)pvParameters;
   for (;;) {
@@ -521,28 +582,51 @@ void TaskControlPuzzleState(void *pvParameters) {
 
       ledm1.clear();
       if (statePotentiometer == SOLVED || statePotentiometer == INACTIVE) {
-        ledm1.drawCircle(4, 11, 2);
+        ledm1.drawLine(1, 10, 5, 14);
+        ledm1.drawLine(5, 14, 7, 12);
       } else {
-        ledm1.drawRectangle(4, 11, 6, 13);
+        ledm1.drawLine(1, 9, 6, 14);
+        ledm1.drawLine(1, 14, 6, 9);
       }
       if (stateRewiring0 == SOLVED || stateRewiring0 == INACTIVE) {
-        ledm1.drawCircle(12, 11, 2);
+        ledm1.drawLine(9, 10, 13, 14);
+        ledm1.drawLine(13, 14, 15, 12);
       } else {
-        ledm1.drawRectangle(12, 11, 14, 13);
+        ledm1.drawLine(9, 9, 14, 14);
+        ledm1.drawLine(9, 14, 14, 9);
       }
       if (stateRewiring1 == SOLVED || stateRewiring1 == INACTIVE) {
-        ledm1.drawCircle(20, 11, 2);
+        ledm1.drawLine(17, 10, 21, 14);
+        ledm1.drawLine(21, 14, 23, 12);
       } else {
-        ledm1.drawRectangle(20, 11, 22, 13);
+        ledm1.drawLine(17, 9, 22, 14);
+        ledm1.drawLine(17, 14, 22, 9);
       }
       if (stateLaserDetection == SOLVED || stateLaserDetection == INACTIVE) {
-        ledm1.drawCircle(28, 11, 2);
+        ledm1.drawLine(25, 10, 29, 14);
+        ledm1.drawLine(29, 14, 31, 12);
       } else {
-        ledm1.drawRectangle(28, 11, 30, 13);
+        ledm1.drawLine(25, 9, 30, 14);
+        ledm1.drawLine(25, 14, 30, 9);
+      }
+
+      // PACMAN
+      if (pacmanState == tPacmanState::CLOSED) {
+        drawOpenPacman(pacmanX, pacmanY);
+        pacmanState = tPacmanState::OPEN;
+        drawPointsPacman(pacmanX, pacmanY);
+      } else if (pacmanState == tPacmanState::OPEN) {
+        drawClosedPacman(pacmanX, pacmanY);
+        pacmanState = tPacmanState::CLOSED;
+      }
+      pacmanX++;
+
+      if (pacmanX == 29) {
+        pacmanX = 3;
       }
     }
 
-    vTaskDelay(300);
+    vTaskDelay(200);
   }
 }
 
@@ -563,9 +647,6 @@ void TaskPiezoButtonReadout(void *pvParameters) {
       ledm1.drawHLine(1, 30, 0);
       ledm1.drawText(30, 3, "STRANGER", MD_MAXPanel::ROT_180);
       ledm1.drawText(26, 9, "THINGS", MD_MAXPanel::ROT_180);
-      // ledm1.drawHLine(4, 0, 2);
-      // ledm1.drawHLine(4, 26, 28);
-      // ledm1.setCharSpacing(1);
 
       float frequencies[] = {130.81, 164.81, 196.0, 246.94,
                              261.63, 246.94, 196.0, 164.81};
@@ -575,6 +656,7 @@ void TaskPiezoButtonReadout(void *pvParameters) {
       }
 
       ledm1.clear();
+      vTaskDelay(1000);
       vTaskResume(xHandleControlPuzzleState);
 
     } else if (buttonState2) {
@@ -607,10 +689,15 @@ void callbackLaserDetection(const char *method1, const char *state, int daten) {
   if (strcmp(method1, "trigger") == 0) {
     if (strcmp(state, "on") == 0) {
       stateLaserDetection = ACTIVE;
+      laserDetectionInitialActivation = false;
       mqttCommunication->publish("7/fusebox/laserDetection", "status", "active",
                                  true);
 
     } else if (strcmp(state, "off") == 0) {
+      // open LOCK
+      digitalWrite(LOCK_0, HIGH);
+      vTaskDelay(1000);
+      digitalWrite(LOCK_0, LOW);
       stateLaserDetection = INACTIVE;
       mqttCommunication->publish("7/fusebox/laserDetection", "status",
                                  "inactive", true);
