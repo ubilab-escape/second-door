@@ -1,21 +1,26 @@
 // define this to get serial debug messages
 #define SERIAL_DEBUG
 
+// Import All Libraries
 #include "Fonts.h"
+// This is a library i wrote to handle MAX7221 7 Segment
 #include "MAX7221.h"
 #include "Wire.h"
-#include "serial_debug.h"
-#include "wifi_secure.h"
+// header File for serial debug commands
 #include <Adafruit_ADS1015.h>
-// #include <Adafruit_NeoPixel.h>
-#include <NeoPixelBus.h>
 #include <Arduino.h>
 #include <MD_MAX72xx.h>
 #include <MD_MAXPanel.h>
+#include <NeoPixelBus.h>
+#include "serial_debug.h"
+#include "wifi_secure.h"
+// MqttBase is a library we wrote to handle MQTT Communication
+// see https://github.com/JayWiz/MqttBase
 #include <MqttBase.h>
 #include <pcf8574_esp.h>
 #include <vector>
 
+// parameters for led ring
 #define colorSaturation 128
 RgbColor red(colorSaturation, 0, 0);
 RgbColor green(0, colorSaturation, 0);
@@ -29,12 +34,16 @@ RgbColor black(0);
 #define ARDUINO_RUNNING_CORE 1
 #endif
 
+// delay times for task scheduler
 #define INIT_DELAY 1000
 #define INACTIVE_DELAY 5000
 #define SOLVED_DELAY 1000
 
+// chip select for led matrix and 7 segment
 #define MAX7221_CS 5
 #define MAX7219_CS 12
+
+// everything else, mostly pin connections
 #define PIEZO_0 13
 #define BUTTON_0 16
 #define BUTTON_1 17
@@ -60,6 +69,7 @@ tPuzzleState stateRewiring0;
 tPuzzleState stateRewiring1;
 tPuzzleState stateLaserDetection;
 
+// bool for initial ledRing colors
 bool laserDetectionInitialActivation = false;
 
 // 7 Segment
@@ -70,8 +80,6 @@ MD_MAXPanel ledm1 = MD_MAXPanel(MD_MAX72XX::FC16_HW, MAX7219_CS, 4, 2);
 
 // Led Ring
 NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> pixels(NUM_PIXEL, RGB_RING_PIN);
-// Adafruit_NeoPixel pixels =
-//     Adafruit_NeoPixel(NUM_PIXEL, RGB_RING_PIN, NEO_GRB + NEO_KHZ800);
 uint8_t sequence[6];
 uint8_t numberOfSequences = 0;
 int old_time_in_ms = millis();
@@ -86,21 +94,21 @@ Adafruit_ADS1015 ads;
 PCF857x portExpander0(0x20, &Wire);
 PCF857x portExpander1(0x21, &Wire);
 
-// MQTT stuff
+// MQTT callback definitions
 MqttBase *mqttCommunication;
 void callbackLaserDetection(const char *method1, const char *state, int daten);
 void callbackRewiring0(const char *method1, const char *state, int daten);
 void callbackRewiring1(const char *method1, const char *state, int daten);
 void callbackPotentiometer(const char *method1, const char *state, int daten);
 
-// Task Attachment
+// Task Definitions
 void TaskPotentiometer(void *pvParameters);
 void TaskWiring0Readout(void *pvParameters);
 void TaskWiring1Readout(void *pvParameters);
 void TaskPiezoButtonReadout(void *pvParameters);
 void TaskControlPuzzleState(void *pvParameters);
 void TaskLaserLock(void *pvParameters);
-void TaskControlButtonsReadout(void *pvParameters); // TODO: Implement
+void TaskControlButtonsReadout(void *pvParameters);  // TODO: Implement
 void TaskMqttLoop(void *pvParameters);
 void TaskMqttPublish(void *pvParameters);
 
@@ -117,7 +125,7 @@ TaskHandle_t xHandleMqttPublish;
 TickType_t xDelay1000ms = pdMS_TO_TICKS(1000);
 TickType_t xDelay2000ms = pdMS_TO_TICKS(2000);
 
-// Init Functions
+// Init Function Definitions
 void initPotentiometer(void);
 void initLaserDetection(void);
 void initRewiring(void);
@@ -127,13 +135,14 @@ void initLedMatrix(void);
 void initMqtt(void);
 
 void setup() {
-
   Serial.begin(115200);
   Serial.println("Setup started ...");
 
+  // not needed
   // disableCore0WDT();
   // disableCore1WDT();
 
+  // Start with init of all subcomponents
   initMqtt();
   vTaskDelay(1000);
 
@@ -150,17 +159,16 @@ void setup() {
   xTaskCreatePinnedToCore(TaskControlPuzzleState, "TaskControlPuzzleState",
                           8192, NULL, 3, &xHandleControlPuzzleState, 1);
 
-  // Mqtt Tasks
+  // Mqtt Task
   xTaskCreatePinnedToCore(TaskMqttLoop, "TaskMqttLoop", 8192, NULL, 1,
                           &xHandleMqttLoop, 0);
-  // xTaskCreatePinnedToCore(TaskMqttPublish, "TaskMqttPublish", 8192, NULL, 2,
-  //                         &xHandleMqttPublish, 0);
 
-  // Fake Riddle Tasks
+  // Piezo Button Task
   xTaskCreatePinnedToCore(TaskPiezoButtonReadout, "TaskPiezoButtonReadout",
                           4096, NULL, 5, NULL, 1);
 
-  // Puzzles
+  // Puzzles Task Attachments (stack size, no parameters, task priority,
+  // taskhandle and running Core)
   xTaskCreatePinnedToCore(TaskPotentiometer, "TaskPotentiometer", 8192, NULL, 3,
                           &xHandlePotentiometer, 1);
   xTaskCreatePinnedToCore(TaskLaserLock, "TaskLaserLock", 8192, NULL, 3,
@@ -173,18 +181,21 @@ void setup() {
 
 void loop() {
   // no code here!
+  // delete normal "arduino task"
   vTaskDelete(NULL);
 }
 
 void initLedMatrix(void) {
   Serial.print("Setup LED Matrix ... ");
   ledm1.begin();
+  // set smaller font
   ledm1.setFont(_Fixed_5x3);
   Serial.println("done!");
 }
 
 void initPotentiometer(void) {
   Serial.print("Setup Potentiometer ... ");
+  // init MAX and ADC
   seg1.initMAX();
   ads.begin();
   statePotentiometer = INIT;
@@ -203,6 +214,7 @@ void initPiezoBuzzer(void) {
 
 void initRewiring(void) {
   Serial.print("Setup Port Expander ... ");
+  // Init I2C port expanders for rewiring readouts
   portExpander0.begin();
   portExpander1.begin();
   stateRewiring0 = INIT;
@@ -212,18 +224,16 @@ void initRewiring(void) {
 
 void initLaserDetection(void) {
   Serial.print("Setup LED Ring ... ");
-  // set led ring to red
   pixels.Begin();
-  //pixels.SetBrightness(100); // die Helligkeit setzen 0 dunke -> 255 ganz hell
-  pixels.Show();             // Alle NeoPixel sind im status "aus".
+  pixels.Show();  // Alle NeoPixel sind im status "aus".
 
   // no color in init
   for (int i = 0; i < NUM_PIXEL; i++) {
     pixels.SetPixelColor(i, black);
     pixels.Show();
   }
-  pinMode(detectorPin, INPUT); // Laser Detector als Eingangssignal setzen
-  pinMode(LOCK_0, OUTPUT);     // Lock als Ausgang setzen
+  pinMode(detectorPin, INPUT);  // Laser Detector als Eingangssignal setzen
+  pinMode(LOCK_0, OUTPUT);      // Lock als Ausgang setzen
 
   stateLaserDetection = INIT;
   Serial.println("done!");
@@ -232,8 +242,10 @@ void initLaserDetection(void) {
 void initMqtt(void) {
   Serial.print("Setup MQTT ... ");
 
+  // Create New MqttCommunication Object with IP adress, client name and port
   mqttCommunication = new MqttBase("10.0.0.2", "test187", 1883);
 
+  // Create vector of shared_pointers of strings and add topic names
   std::vector<std::shared_ptr<std::string>> mqttTopics;
   mqttTopics.push_back(
       std::make_shared<std::string>("7/fusebox/laserDetection"));
@@ -242,6 +254,7 @@ void initMqtt(void) {
   mqttTopics.push_back(
       std::make_shared<std::string>("7/fusebox/potentiometer"));
 
+  // Create vectors of function pointers pointing to mqtt Callbacks
   std::vector<std::function<void(const char *, const char *, int)>>
       logicCallbacks;
   logicCallbacks.push_back(callbackLaserDetection);
@@ -249,6 +262,8 @@ void initMqtt(void) {
   logicCallbacks.push_back(callbackRewiring1);
   logicCallbacks.push_back(callbackPotentiometer);
 
+  // call init function of mqttCommunication object with ssid, password & vector
+  // of topicNames and logicCallbacks
   mqttCommunication->init(ssid, password, mqttTopics, logicCallbacks);
 
   Serial.println("done!");
@@ -262,6 +277,7 @@ void TaskPotentiometer(void *pvParameters) {
       uint16_t pValues[4];
       float adcValues[4];
       for (uint8_t i = 0; i < 4; i++) {
+        // read adc value, convert it and store it in array
         adcValues[i] = ads.readADC_SingleEnded(i);
         adcValues[i] = adcValues[i] * 9 / 1024;
         pValues[i] = adcValues[i];
@@ -270,12 +286,16 @@ void TaskPotentiometer(void *pvParameters) {
         SERIALPRINT("", pValues[i]);
         SERIALPRINTS(" ");
       }
+      // suspend and resume after print (semaphore preventing race conditions on
+      // spi bus)
       vTaskSuspend(xHandleControlPuzzleState);
+      // print converted values on 7 segment
       seg1.transferData(0x01, pValues[0]);
       seg1.transferData(0x02, pValues[1]);
       seg1.transferData(0x03, pValues[2]);
       seg1.transferData(0x04, pValues[3]);
       vTaskResume(xHandleControlPuzzleState);
+      // Check for 1995
       if (pValues[0] == 1 && pValues[1] == 9 && pValues[2] == 9 &&
           pValues[3] == 5) {
         SERIALPRINTS("Potis Solved!\n");
@@ -320,12 +340,11 @@ void TaskLaserLock(void *pvParameters) {
   (void)pvParameters;
 
   for (;;) {
-
     if (stateLaserDetection == ACTIVE) {
       SERIALPRINTS("ACTIVE:\tTaskLaserDetection: \t\n")
 
       if (!laserDetectionInitialActivation == true) {
-        // Show red
+        // Show red ring
         for (int i = 0; i < NUM_PIXEL; i++) {
           pixels.SetPixelColor(i, red);
         }
@@ -358,9 +377,8 @@ void TaskLaserLock(void *pvParameters) {
       // check if new additional LED shoulb set to green
       if ((numberOfSequences % 2 == 0) && (numberOfSequences > 0)) {
         uint8_t RGB_led = (uint8_t)numberOfSequences / 2;
-        pixels.SetPixelColor(
-            RGB_led, green); // Moderately bright green color.
-        pixels.Show(); // This sends the updated pixel color to the hardware.
+        pixels.SetPixelColor(RGB_led, green);  // Moderately bright green color.
+        pixels.Show();  // This sends the updated pixel color to the hardware.
       }
 
       // check if puzzle is solved
@@ -386,10 +404,10 @@ void TaskLaserLock(void *pvParameters) {
           if (numberOfSequences % 2 == 0) {
             uint8_t RGB_led = (uint8_t)numberOfSequences / 2;
             pixels.SetPixelColor(RGB_led,
-                                 red); // set led to red
+                                 red);  // set led to red
             pixels.Show();
           }
-          numberOfSequences--; // count down sequence if max time was reached
+          numberOfSequences--;  // count down sequence if max time was reached
         }
         old_time_in_ms = millis();
         // old_time_in_ms = xTaskGetTickCount();
@@ -433,6 +451,7 @@ void TaskWiring0Readout(void *pvParameters) {
       uint16_t rewiringPins0[] = {REWIRE_0_1, REWIRE_0_2, REWIRE_0_3,
                                   REWIRE_0_4, REWIRE_0_5};
       for (int i = 0; i <= 4; i++) {
+        // read adc, convert and store values in array
         rewiringValues0[i] = analogRead(rewiringPins0[i]);
         rewiringValues0[i] = rewiringValues0[i] / 4095 * 33;
         SERIALPRINT("", i);
@@ -441,8 +460,9 @@ void TaskWiring0Readout(void *pvParameters) {
         SERIALPRINTS(" ");
       }
       // Measured Values: 33 25 19 13 7
-      // TODO: Problem with [0]: WiFi and ADC not working together,
-      // TODO: replaced 13 by 33
+      // Problem with [0]: WiFi and ADC not working together,
+      // Solution: replaced 13 by 33
+      // Check voltages
       if ((rewiringValues0[3] >= 30 && rewiringValues0[3] <= 36) &&
           (rewiringValues0[4] >= 22 && rewiringValues0[4] <= 28) &&
           (rewiringValues0[1] >= 16 && rewiringValues0[1] <= 22) &&
@@ -454,7 +474,6 @@ void TaskWiring0Readout(void *pvParameters) {
                                    true);
       } else {
         SERIALPRINTS("Rewiring 0 not solved!\n");
-        // puzzleStateRewiring0 = UNSOLVED;
       }
       vTaskDelay(2000);
     } else if (stateRewiring0 == SOLVED) {
@@ -475,8 +494,10 @@ void TaskWiring1Readout(void *pvParameters) {
   for (;;) {
     if (stateRewiring1 == ACTIVE) {
       SERIALPRINTS("ACTIVE:\tTaskWiring1Readout: \t\t")
+      // read value from port expander
       uint8_t values = portExpander0.read8();
       // 0x58 + 0x42 = 0x9A = 0b10011010
+      // check if value is true
       if (values == 0b10011010) {
         SERIALPRINTS("Rewiring 1 solved!\n")
         stateRewiring1 = SOLVED;
@@ -505,16 +526,14 @@ void blink_ring(uint8_t blinking_number, uint8_t frequency) {
   for (uint8_t k = 0; k < blinking_number; k++) {
     for (int i = 0; i < NUM_PIXEL; i++) {
       // pixels.Color takes RGB values, from 0,0,0 up to 255,255,255
-      pixels.SetPixelColor(
-          i, black); // Moderately bright green color.
-      pixels.Show(); // This sends the updated pixel color to the hardware.
+      pixels.SetPixelColor(i, black);  // Moderately bright green color.
+      pixels.Show();  // This sends the updated pixel color to the hardware.
     }
     delay(period / 2);
     for (int i = 0; i < NUM_PIXEL; i++) {
       // pixels.Color takes RGB values, from 0,0,0 up to 255,255,255
-      pixels.SetPixelColor(
-          i, green); // Moderately bright green color.
-      pixels.Show(); // This sends the updated pixel color to the hardware.
+      pixels.SetPixelColor(i, green);  // Moderately bright green color.
+      pixels.Show();  // This sends the updated pixel color to the hardware.
     }
     delay(period / 2);
   }
@@ -532,6 +551,7 @@ uint8_t analyse_sequence(uint8_t sequence[6], uint8_t target) {
 }
 
 void drawOpenPacman(uint8_t xPosition, uint8_t yPosition) {
+  // draw Pacman
   ledm1.drawCircle(xPosition, yPosition, 0);
   ledm1.drawCircle(xPosition + 1, yPosition - 1, 0);
   ledm1.drawCircle(xPosition + 2, yPosition - 2, 0);
@@ -572,14 +592,13 @@ tPacmanState pacmanState = CLOSED;
 void TaskControlPuzzleState(void *pvParameters) {
   (void)pvParameters;
   for (;;) {
-
+    // Check if all puzzles are Solved
     if (statePotentiometer == INACTIVE && stateRewiring0 == INACTIVE &&
         stateRewiring1 == INACTIVE && stateLaserDetection == INACTIVE) {
       ledm1.clear();
       ledm1.drawText(25, 7, "Solved!", MD_MAXPanel::ROT_180);
 
     } else {
-
       ledm1.clear();
       if (statePotentiometer == SOLVED || statePotentiometer == INACTIVE) {
         ledm1.drawLine(1, 10, 5, 14);
@@ -621,6 +640,7 @@ void TaskControlPuzzleState(void *pvParameters) {
       }
       pacmanX++;
 
+      // pacman reached end
       if (pacmanX == 29) {
         pacmanX = 3;
       }
@@ -640,14 +660,14 @@ void TaskPiezoButtonReadout(void *pvParameters) {
       vTaskSuspend(xHandleControlPuzzleState);
       // SERIALPRINTS("Button 1 pressed\n");
       ledm1.clear();
-      // ledm1.setCharSpacing(0);
-
       // upper right corner => 0, 0
 
+      // Show Stranger Things Logo
       ledm1.drawHLine(1, 30, 0);
       ledm1.drawText(30, 3, "STRANGER", MD_MAXPanel::ROT_180);
       ledm1.drawText(26, 9, "THINGS", MD_MAXPanel::ROT_180);
 
+      // frequencies of stranger things melody
       float frequencies[] = {130.81, 164.81, 196.0, 246.94,
                              261.63, 246.94, 196.0, 164.81};
       for (int i = 0; i <= 7; i++) {
@@ -680,6 +700,7 @@ void TaskPiezoButtonReadout(void *pvParameters) {
 void TaskMqttLoop(void *pvParameters) {
   (void)pvParameters;
   for (;;) {
+    // needed for Mqtt Object, call function
     mqttCommunication->loop();
     vTaskDelay(500);
   }
