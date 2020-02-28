@@ -9,9 +9,7 @@ class Robot {
   void controll();
   Color get_color();
 
-  /**
-   * is robot controllable?
-   */
+  /// is robot controllable?
   bool robotOn = false;
   bool allowColor = false;
 
@@ -23,9 +21,7 @@ class Robot {
   void turn_left();
   bool controll_button_pressed();
 
-  /**
-   * PS2 controller handling variables
-   */
+  /// PS2 controller handling variables
   PS2X ps2x;
   int error = 0;
   byte type = 0;
@@ -35,9 +31,8 @@ class Robot {
 
   Color color = red;
   int rememberButton;
-  /**
-   * Motor pins
-   */
+  
+  /// Motor pins
   int leftForward;
   int leftBackward;
   int rigthBackward;

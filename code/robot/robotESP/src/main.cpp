@@ -64,6 +64,8 @@ void setup() {
   /// keep robot off at begining
   digitalWrite(ROBOT_ON, HIGH);
 
+  xTaskCreate(TaskTalk2Robot, "Talk2Robot", 1024, NULL, 2, NULL);
+
   /// communication intitialization
   std::vector<std::shared_ptr<std::string>> mqtt_topics;
   mqtt_topics.push_back(std::make_shared<std::string>(topic));
