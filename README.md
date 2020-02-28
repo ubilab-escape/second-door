@@ -21,9 +21,9 @@ To open the second door, 3 puzzles must be solved. These puzzles are called Stag
 
 ## Stage 1 - Breaking the lock of the fusebox
 
-In the first stage the group has to crack the lock of the fusebox. A laser somewhere in the room is to be used. There is a lock on the fusebox which can only be opened when the laser beam is aimed at it. To do this, the group must use mirrors to divert the laser beam through the entire room. The 4 mirrors that can be used are mounted on a wall with magnets. This hides them, and the group must come up with the idea of using the mirrors. To make sure the participants are not using a flash light or similar the laser gets pulsed.
+In the first stage the group has to crack the lock of the fusebox. A laser somewhere in the room is to be used. There is a lock on the fusebox which can only be opened when the laser beam is aimed at it. To do this, the group must use mirrors to divert the laser beam through the entire room. The 2 mirrors that can be used are mounted on a wall. This hides them, and the group must come up with the idea of using the mirrors.
 
-The lock on the fusebox measures the pulsed laser beam. So that only this specific laser light can open the lock. The readout of the signal is done by the ESP32 inside the fusebox. The progress of this crack process is visualized with LEDs arranged in a circle. Once this color circle is closed, the microcontroller gives a signal to an actuator so that the lid of the fusebox opens. This completes the first stage.
+The lock on the fusebox measures the laser beam. So that only this specific laser light can open the lock. The readout of the signal is done by the ESP32 inside the fusebox. The progress of this crack process is visualized with LEDs arranged in a circle. Once this color circle is closed, the microcontroller gives a signal to an actuator so that the lid of the fusebox opens. This completes the first stage.
 
 <p align="center"> 
 <img src="/docu/readme/Laser_sensor.png" width=200>
@@ -34,7 +34,7 @@ To make it easier for the participants the laser warning symbol will be attached
 
 ## Stage 2 - Restoring the power supply for the robot
 
-Inside the fusebox is a pcb and three small "rewiring" riddles need to be solved. The following image shows the inside of the fusebox.
+Inside the fusebox two small "rewiring" riddles need to be solved . The following image shows the inside of the fusebox.
 
 <p align="center"> 
 <img src="/docu/readme/finished_box.jpg" width=800>
