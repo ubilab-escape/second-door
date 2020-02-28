@@ -35,7 +35,8 @@ void setup() {
   pinMode(ROBOT_ON, OUTPUT);
 
   xTaskCreate(TaskTalk2Robot, "Talk2Robot", 1024, NULL, 2, NULL);
-
+  
+  /// Init mqtt stuff
   std::vector<std::shared_ptr<std::string>> mqtt_topics;
   mqtt_topics.push_back(std::make_shared<std::string>(topic));
   std::vector<std::function<void(const char *, const char *, int)>> logic_callbacks;

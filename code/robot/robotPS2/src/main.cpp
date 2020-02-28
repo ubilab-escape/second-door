@@ -41,31 +41,6 @@ Robot robot;
 
 Adafruit_NeoPixel pixels(NUMPIXELS, PIXEL_PIN, NEO_GRB + NEO_KHZ800);
 
-/////////////////////////////////////
-// DO NOT USE millis with RTOS
-/////////////////////////////////////
-class Timer {
- public:
-  void init() {
-    now = millis();
-    remember = millis();
-  }
-  void set_time() { now = millis(); }
-  void remember_me() { remember = millis(); }
-  unsigned long get_diff(bool rem = false) {
-    unsigned long diff = now - remember;
-    if (rem == true) {
-      remember_me();
-    }
-    return diff;
-  }
-
- private:
-  unsigned long now;
-  unsigned long remember;
-};
-
-Timer time;
 
 void drive_forward(byte val) {
   val = 255 - val;
@@ -110,61 +85,6 @@ void setup() {
 }
 
 void loop() {
-  // ps2x.read_gamepad(false, vibrate);
-
-  // timing for reseting motor pins in case of keeping different button pressed
-  // time.set_time();
-
-  /*
-  while (error == 1) {
-    stop_motors();
-    Serial.println("Lost connection to controller!");
-    error = ps2x.read_gamepad(false, vibrate);
-    delay(1000);
-  }
-  */
-  /*
-  // Joystick
-  ps2_translation = ps2x.Analog(PSS_LY);
-  ps2_rotation = ps2x.Analog(PSS_LX);
-
-  if (ps2_translation < 126) {
-    drive_forward(ps2_translation);
-  }
-  if (ps2_translation > 130) {
-    drive_backward(ps2_translation);
-  }
-  */
-  /*
-  if (ps2_translation >= 126 && ps2_translation <= 130) {
-    analogWrite(LEFT_FORWARD, 0);
-    analogWrite(RIGHT_FORWARD, 0);
-    analogWrite(LEFT_BACKWARD, 0);
-    analogWrite(RIGHT_BACKWARD, 0);
-  }
-  */
-  /*
-  if(ps2_rotation > 128){
-    turn_right(ps2_rotation);
-  }
-  if(ps2_rotation < 128){
-    turn_left(ps2_rotation);
-  }
-  */
-
-  /*
-    if (controll_button_pressed() == false || time.get_diff() > 500) {
-      Serial.println("STOP");
-      stop_motors();
-      time.remember_me();
-    }
-
-    Serial.print(ps2_translation);  // Left stick, Y axis. Other options: LX, RY, RX
-    Serial.print(",");
-    Serial.print(ps2_rotation);
-    Serial.println(" ");
-    delay(10);
-    */
 }
 
 void TaskControllRobot(void *pvParameters) {
