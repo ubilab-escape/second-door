@@ -85,14 +85,14 @@ void setup() {
   robot.init(PS2_CLK, PS2_CMD, PS2_SEL, PS2_DAT, pressures, rumble, LEFT_FORWARD, LEFT_BACKWARD,
              RIGHT_FORWARD, RIGHT_BACKWARD);
 
-  xTaskCreate(TaskControllRobot, (const portCHAR *)"ControllRobot",
+  xTaskCreate(TaskControllRobot, "ControllRobot",
               128  // This stack size can be checked & adjusted by reading Highwater
               ,
               NULL, 1  // priority
               ,
               NULL);
 
-  xTaskCreate(TaskBlink, (const portCHAR *)"Blink"  // A name just for humans
+  xTaskCreate(TaskBlink, "Blink"  // A name just for humans
               ,
               128  // Stack size
               ,
@@ -100,7 +100,7 @@ void setup() {
               ,
               NULL);
 
-  xTaskCreate(TaskCheckESP, (const portCHAR *)"CheckESP"  // A name just for humans
+  xTaskCreate(TaskCheckESP, "CheckESP"  // A name just for humans
               ,
               128  // Stack size
               ,
