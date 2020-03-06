@@ -1,5 +1,10 @@
 [![Build Status](https://travis-ci.com/ubilab-escape/second-door.svg?branch=master)](https://travis-ci.com/ubilab-escape/second-door)
 
+**More notes on the implementation can be seen [here](
+https://github.com/ubilab-escape/second-door/blob/master/docu/implementation.md)**
+
+# Overview
+
 - [Riddles](#Riddles)
   * [Stage 1 - Breaking the lock of the fusebox](#stage-1---breaking-the-lock-of-the-fusebox)
   * [Stage 2 - Restoring the power supply for the robot](#stage-2---restoring-the-power-supply-for-the-robot)
